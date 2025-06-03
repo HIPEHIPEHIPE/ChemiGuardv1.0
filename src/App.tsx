@@ -1,25 +1,39 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './stores/authStore';
+
+import LoginPage from './pages/Login/LoginPage';
+import DashboardPage from './pages/Dashboard/DashboardPage';
+
+import MainLayout from './layouts/MainLayout';
 
 function App() {
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        {/* 로그인 페이지는 누구나 접근 가능 */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* 로그인된 사용자만 접근 가능한 메인 레이아웃 */}
+        {isLoggedIn && (
+          <Route path="/" element={<MainLayout />}>
+            <Route path="dashboard" element={<DashboardPage />} />
+            {/* 추후 다른 페이지들도 여기에 추가 */}
+          </Route>
+        )}
+
+        {/* 로그인 안 되어 있을 경우 모든 경로에서 로그인으로 리디렉션 */}
+        {!isLoggedIn && <Route path="*" element={<Navigate to="/login" replace />} />}
+
+        {/* 루트 경로에서 자동 분기 */}
+        <Route
+          path="/"
+          element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />}
+        />
+      </Routes>
+    </Router>
   );
 }
 
