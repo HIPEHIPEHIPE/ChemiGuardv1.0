@@ -11,11 +11,17 @@ const Header = () => {
       case '/dashboard':
         return '관리자 대시보드';
       case '/data-acquisition':
-        return 'Data Acquisition';
+        return '데이터 획득';
       case '/data-management':
-        return 'Data Management';
+        return '데이터 관리';
+      case '/data-refining':
+        return '데이터 정제';
+      case '/data-processing':
+        return '데이터 가공';
       case '/qa-generation':
-        return 'QA Generation';
+        return 'Q&A 생성';
+      case '/qa-validation':
+        return 'Q&A 검수';
       // 필요한 페이지들 추가
       default:
         return '';

@@ -4,6 +4,12 @@ import { useAuthStore } from './stores/authStore';
 
 import LoginPage from './pages/Login/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
+import DataAcquisitionPage from './pages/DataAcquisition/DataAcquisitionPage';
+import DataManagementPage from './pages/DataManagement/DataManagementPage';
+import DataRefiningPage from './pages/DataRefining/DataRefiningPage';
+import DataProcessingPage from './pages/DataProcessing/DataProcessingPage';
+import QaGenerationPage from './pages/QaGeneration/QaGenerationPage';
+import QaValidationPage from './pages/QaValidation/QaValidationPage';
 
 import MainLayout from './layouts/MainLayout';
 
@@ -20,6 +26,12 @@ function App() {
         {isLoggedIn && (
           <Route path="/" element={<MainLayout />}>
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="data-acquisition" element={<DataAcquisitionPage />} />
+            <Route path="data-management" element={<DataManagementPage />} />
+            <Route path="data-refining" element={<DataRefiningPage />} />
+            <Route path="data-processing" element={<DataProcessingPage />} />
+            <Route path="qa-generation" element={<QaGenerationPage />} />
+            <Route path="qa-validation" element={<QaValidationPage />} />
             {/* 추후 다른 페이지들도 여기에 추가 */}
           </Route>
         )}

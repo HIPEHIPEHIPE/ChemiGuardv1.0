@@ -32,7 +32,7 @@ const DashboardPage = () => {
           ]}
           qualityMetrics={[
             { label: '데이터 품질', percent: 85, color: '#10b981' },
-            { label: '자동오직성', percent: 15, color: '#f59e0b' },
+            { label: '자동 처리 오류율', percent: 15, color: '#f59e0b' },
             { label: '데이터 완전성', percent: 92, color: '#3b82f6' },
           ]}
         />

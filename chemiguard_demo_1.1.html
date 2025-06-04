@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChemiGuard v1.0 - 화학제품 데이터 관리 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 사이드바 스타일 */
+        .sidebar {
+            width: 200px;
+            background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            padding: 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu {
+            padding: 10px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #60a5fa;
+        }
+
+        .menu-item.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #60a5fa;
+            font-weight: bold;
+        }
+
+        .menu-item .icon {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        /* 메인 컨텐츠 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 헤더 */
+        .header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        /* 컨텐츠 영역 */
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* 대시보드 스타일 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid;
+        }
+
+        .stat-card.blue { border-left-color: #3b82f6; }
+        .stat-card.green { border-left-color: #10b981; }
+        .stat-card.orange { border-left-color: #f59e0b; }
+        .stat-card.purple { border-left-color: #8b5cf6; }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-number.blue { color: #3b82f6; }
+        .stat-number.green { color: #10b981; }
+        .stat-number.orange { color: #f59e0b; }
+        .stat-number.purple { color: #8b5cf6; }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* 차트 영역 */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .progress-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .progress-fill.blue { background: #3b82f6; }
+        .progress-fill.green { background: #10b981; }
+        .progress-fill.orange { background: #f59e0b; }
+        .progress-fill.purple { background: #8b5cf6; }
+
+        /* 테이블 스타일 */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #f8fafc;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        /* 검색 및 필터 */
+        .search-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        /* 카드 스타일 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* 화학물질 정보 스타일 */
+        .chemical-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-group {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #6b7280;
+        }
+
+        /* 탭 스타일 */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 상태 배지 */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-complete { background: #d1fae5; color: #065f46; }
+        .status-progress { background: #fed7aa; color: #9a3412; }
+        .status-pending { background: #e5e7eb; color: #374151; }
+        .status-approved { background: #e0e7ff; color: #3730a3; }
+        .status-error { background: #fecaca; color: #991b1b; }
+
+        /* GHS 코드 스타일 */
+        .ghs-code {
+            background: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .chemical-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                width: 60px;
+            }
+            
+            .sidebar-header h2 {
+                display: none;
+            }
+            
+            .menu-item span {
+                display: none;
+            }
+        }
+
+        /* 추가 스타일 */
+        .data-processing-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .guidelines-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .validation-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .feedback-box {
+            background: #fffbeb;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .preview-box {
+            background: #fafafa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f9fafb;
+            margin-bottom: 20px;
+        }
+
+        .history-timeline {
+            border-left: 3px solid #e5e7eb;
+            padding-left: 15px;
+        }
+
+        .history-item {
+            margin-bottom: 15px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 4px;
+            margin: 0 2px;
+            cursor: pointer;
+        }
+
+        .pagination button.active {
+            background: #4f46e5;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>🧪 화학제품 데이터</h2>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-section="dashboard">
+                    <span class="icon">📊</span>
+                    <span>관리자 대시보드</span>
+                </a>
+                <a href="#" class="menu-item" data-section="data-acquisition">
+                    <span class="icon">📥</span>
+                    <span>데이터 획득</span>
+                </a>
+                <a href="#" class="menu-item" data-section="data-management">
+                    <span class="icon">🗂️</span>
+                    <span>데이터 관리</span>
+                </a>
+                <a href="#" class="menu-item" data-section="data-refining">
+                    <span class="icon">🛠️</span>
+                    <span>데이터 정제</span>
+                </a>
+                <a href="#" class="menu-item" data-section="data-processing">
+                    <span class="icon">⚙️</span>
+                    <span>데이터 가공</span>
+                </a>
+                <a href="#" class="menu-item" data-section="qa-generation">
+                    <span class="icon">❓</span>
+                    <span>Q&A 생성</span>
+                </a>
+                <a href="#" class="menu-item" data-section="qa-validation">
+                    <span class="icon">🔍</span>
+                    <span>데이터 검수</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <header class="header">
+                <h1 id="page-title">관리자 대시보드</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">🔔 알림</button>
+                    <button class="btn btn-primary">👤 정숙</button>
+                </div>
+            </header>
+
+            <main class="content">
+                <div id="dashboard" class="content-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card blue">
+                            <div class="stat-number blue">287</div>
+                            <div class="stat-label">총 등록 데이터 / 목표 300건</div>
+                        </div>
+                        <div class="stat-card green">
+                            <div class="stat-number green">156</div>
+                            <div class="stat-label">등록 완료</div>
+                        </div>
+                        <div class="stat-card orange">
+                            <div class="stat-number orange">43</div>
+                            <div class="stat-label">검수 대기</div>
+                        </div>
+                        <div class="stat-card purple">
+                            <div class="stat-number purple">85%</div>
+                            <div class="stat-label">품질 검수 통과율</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="chart-container">
+                            <h3 class="chart-title">단계별 진행 현황</h3>
+                            <div class="progress-item">
+                                <span>초기 정제</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill green" style="width: 100%"></div>
+                                </div>
+                                <span>100%</span>
+                            </div>
+                            <div class="progress-item">
+                                <span>독성 정보</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill blue" style="width: 82%"></div>
+                                </div>
+                                <span>82%</span>
+                            </div>
+                            <div class="progress-item">
+                                <span>가공 정보</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill orange" style="width: 70%"></div>
+                                </div>
+                                <span>70%</span>
+                            </div>
+                            <div class="progress-item">
+                                <span>검수 완료</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill purple" style="width: 58%"></div>
+                                </div>
+                                <span>58%</span>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <h3 class="chart-title">카테고리별 데이터 분포</h3>
+                            <div class="progress-item">
+                                <span>세정제: 120건 (42%)</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill blue" style="width: 42%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-item">
+                                <span>살균제: 78건 (27%)</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill green" style="width: 27%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-item">
+                                <span>방향제: 45건 (16%)</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill orange" style="width: 16%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-item">
+                                <span>기타: 19건 (6%)</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill purple" style="width: 6%"></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <h4 style="margin-bottom: 10px;">품질 지표</h4>
+                                <div class="progress-item">
+                                    <span>데이터 품질</span>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill green" style="width: 85%"></div>
+                                    </div>
+                                    <span>85%</span>
+                                </div>
+                                <div class="progress-item">
+                                    <span>자동 처리 오류율</span>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill orange" style="width: 15%"></div>
+                                    </div>
+                                    <span>15%</span>
+                                </div>
+                                <div class="progress-item">
+                                    <span>데이터 완전성</span>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill blue" style="width: 92%"></div>
+                                    </div>
+                                    <span>92%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container" style="margin-top: 20px;">
+                        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
+                            <h3 style="margin-bottom: 10px;">작업자별 현황</h3>
+                            <button class="btn btn-primary" style="float: right; margin-top: -30px;">목록 보기</button>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>작업자</th>
+                                    <th>담당 건수</th>
+                                    <th>완료 건수</th>
+                                    <th>반려율</th>
+                                    <th>품질</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>김○○</td>
+                                    <td>15건</td>
+                                    <td>12건</td>
+                                    <td>8%</td>
+                                    <td style="color: #10b981;">좋음</td>
+                                    <td style="color: #3b82f6;">정상</td>
+                                </tr>
+                                <tr>
+                                    <td>이○○</td>
+                                    <td>22건</td>
+                                    <td>18건</td>
+                                    <td>5%</td>
+                                    <td style="color: #10b981;">좋음</td>
+                                    <td style="color: #3b82f6;">정상</td>
+                                </tr>
+                                <tr>
+                                    <td>박○○</td>
+                                    <td>18건</td>
+                                    <td>10건</td>
+                                    <td>15%</td>
+                                    <td style="color: #f59e0b;">보통</td>
+                                    <td style="color: #3b82f6;">정상</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="data-acquisition" class="content-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">데이터 획득</h2>
+                            <div>
+                                <button class="btn btn-primary">자동 정제</button>
+                                <button class="btn btn-success">정제 완료</button>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #3b82f6;">32건</div>
+                                <div class="stat-label">오류</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #10b981;">5건</div>
+                                <div class="stat-label">경고</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #f59e0b;">8건</div>
+                                <div class="stat-label">검토필요</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #8b5cf6;">12건</div>
+                                <div class="stat-label">처리 완료</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 15px;">발견된 문제점 및 제안사항</h3>
+                            
+                            <div style="background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                                <div style="color: #dc2626; font-weight: bold; margin-bottom: 5px;">❌ CAS 번호 형식 오류</div>
+                                <div style="color: #7f1d1d; font-size: 14px;">
+                                    내용: 소듐라우릴황산염의 CAS 번호 형식이 올바르지 않습니다.
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <div style="font-size: 12px; color: #7f1d1d;">
+                                        입력 형식: <span style="color: #dc2626;">151-21-3</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #7f1d1d;">
+                                        정정 제안: <span style="color: #dc2626;">151-21-3</span>
+                                    </div>
+                                    <div style="margin-top: 5px;">
+                                        <button class="btn" style="background: #10b981; color: white; font-size: 12px; padding: 4px 8px;">수정 적용</button>
+                                        <button class="btn" style="background: #6b7280; color: white; font-size: 12px; padding: 4px 8px;">무시</button>
+                                        <button class="btn" style="background: #f59e0b; color: white; font-size: 12px; padding: 4px 8px;">상세 보기</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                                <div style="color: #d97706; font-weight: bold; margin-bottom: 5px;">⚠️ 함량 범위 오류</div>
+                                <div style="color: #92400e; font-size: 14px;">
+                                    내용: 소듐라우릴황산염의 함량 범위가 100%를 초과합니다. (현재값: 15-20%)
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <div style="font-size: 12px; color: #92400e;">
+                                        현재 함량: <span style="color: #d97706;">15-20%</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #92400e;">
+                                        정정 제안: <span style="color: #d97706;">5-10%</span>
+                                    </div>
+                                    <div style="margin-top: 5px;">
+                                        <button class="btn" style="background: #10b981; color: white; font-size: 12px; padding: 4px 8px;">수정 적용</button>
+                                        <button class="btn" style="background: #6b7280; color: white; font-size: 12px; padding: 4px 8px;">무시</button>
+                                        <button class="btn" style="background: #f59e0b; color: white; font-size: 12px; padding: 4px 8px;">상세 보기</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 15px;">
+                                <div style="color: #059669; font-weight: bold; margin-bottom: 5px;">✅ 독성 설명 표준화 제안</div>
+                                <div style="color: #065f46; font-size: 14px;">
+                                    성분들의 안전성에 대한 설명을 표준화할 수 있습니다.
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <div style="font-size: 12px; color: #065f46;">
+                                        현재 설명 예시: <span style="color: #059669;">Ethanol 과 안전함</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #065f46;">
+                                        표준화 제안: <span style="color: #059669;">"안전성 확인됨", "주의 필요" 등 일관된 용어 사용</span>
+                                    </div>
+                                    <div style="margin-top: 5px;">
+                                        <button class="btn" style="background: #10b981; color: white; font-size: 12px; padding: 4px 8px;">자동 정제</button>
+                                        <button class="btn" style="background: #f59e0b; color: white; font-size: 12px; padding: 4px 8px;">무시</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="upload-area">
+                            <div style="font-size: 24px; margin-bottom: 10px;">📁</div>
+                            <div style="font-weight: bold; margin-bottom: 5px;">파일을 여기에 드래그하거나 클릭하여 업로드</div>
+                            <div style="color: #6b7280; font-size: 14px;">Excel, CSV 파일 지원 (최대 10MB)</div>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <h4 style="margin-bottom: 10px;">최근 업로드 이력</h4>
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>파일명</th>
+                                            <th>크기</th>
+                                            <th>업로드일</th>
+                                            <th>상태</th>
+                                            <th>처리된 데이터</th>
+                                            <th>액션</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>📊 화학제품_데이터_2025_0430.xlsx</td>
+                                            <td>2.1 MB</td>
+                                            <td>2025-04-30 14:23</td>
+                                            <td><span class="status-complete">정제 완료</span></td>
+                                            <td>287건 / 총 287건</td>
+                                            <td>
+                                                <button class="btn btn-primary" style="font-size: 12px;">🔍</button>
+                                                <button class="btn btn-secondary" style="font-size: 12px;">📥</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>📊 추가_세정제_정보_2025_0429.csv</td>
+                                            <td>1.8 MB</td>
+                                            <td>2025-04-29 09:15</td>
+                                            <td><span class="status-progress">정제 진행중</span></td>
+                                            <td>152건 / 총 200건</td>
+                                            <td>
+                                                <button class="btn btn-primary" style="font-size: 12px;">🔍</button>
+                                                <button class="btn btn-warning" style="font-size: 12px;">⏸️</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="data-management" class="content-section">
+                    <div style="background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px;">
+                        <div class="tabs" style="border-bottom: none; padding: 20px 20px 0 20px;">
+                            <button class="tab active" onclick="showDataTab(event, 'all-data')">전체 데이터 (287)</button>
+                            <button class="tab" onclick="showDataTab(event, 'completed')">대기중 (54)</button>
+                            <button class="tab" onclick="showDataTab(event, 'pending')">진행중 (92)</button>
+                            <button class="tab" onclick="showDataTab(event, 'errors')">완료 (141)</button>
+                            <button class="tab" onclick="showDataTab(event, 'draft')">정보 부족 (12)</button>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                <input type="text" class="search-input" placeholder="제품명 또는 CAS 번호로 검색" style="flex: 1;">
+                                <select style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                                    <option>모든 카테고리</option>
+                                    <option>세정제</option>
+                                    <option>살균제</option>
+                                    <option>방향제</option>
+                                </select>
+                                <select style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                                    <option>모든 단계</option>
+                                    <option>초기 검토</option>
+                                    <option>가공 진행중</option>
+                                    <option>검수 대기</option>
+                                </select>
+                                <select style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                                    <option>담당자 전체</option>
+                                    <option>김○○</option>
+                                    <option>이○○</option>
+                                    <option>박○○</option>
+                                </select>
+                                <button class="btn btn-secondary">🔍 고급 필터</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="all-data" class="tab-content active">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox"></th>
+                                        <th>제품명</th>
+                                        <th>카테고리</th>
+                                        <th>주성분</th>
+                                        <th>CAS 번호</th>
+                                        <th>진행 단계</th>
+                                        <th>담당자</th>
+                                        <th>마지막 수정일</th>
+                                        <th>액션</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>바이오롤젯 순수세정</td>
+                                        <td>소독제</td>
+                                        <td>에탄올</td>
+                                        <td>64-17-5</td>
+                                        <td><span class="status-complete">가공 완료</span></td>
+                                        <td>김○○</td>
+                                        <td>2025-04-28</td>
+                                        <td>
+                                            <button class="btn btn-primary" style="font-size: 12px;" onclick="viewDetail('ethanol')">🔍</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">✏️</button>
+                                            <button class="btn btn-danger" style="font-size: 12px;">🗑️</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>클린원시 주방세정</td>
+                                        <td>세정제</td>
+                                        <td>소듐라우릴황산염</td>
+                                        <td>151-21-3</td>
+                                        <td><span class="status-progress">가공 진행중</span></td>
+                                        <td>이○○</td>
+                                        <td>2025-04-25</td>
+                                        <td>
+                                            <button class="btn btn-primary" style="font-size: 12px;" onclick="viewDetail('sls')">🔍</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">✏️</button>
+                                            <button class="btn btn-danger" style="font-size: 12px;">🗑️</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>퓨어클린 표백제</td>
+                                        <td>세정제</td>
+                                        <td>차아염소산나트륨</td>
+                                        <td>7681-52-9</td>
+                                        <td><span class="status-pending">처리 대기</span></td>
+                                        <td>박○○</td>
+                                        <td>2025-04-22</td>
+                                        <td>
+                                            <button class="btn btn-primary" style="font-size: 12px;">🔍</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">✏️</button>
+                                            <button class="btn btn-danger" style="font-size: 12px;">🗑️</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>프레시에어 방향제</td>
+                                        <td>방향제</td>
+                                        <td>리모넨</td>
+                                        <td>5989-27-5</td>
+                                        <td><span class="status-approved">승인 완료</span></td>
+                                        <td>김○○</td>
+                                        <td>2025-04-20</td>
+                                        <td>
+                                            <button class="btn btn-primary" style="font-size: 12px;">🔍</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">✏️</button>
+                                            <button class="btn btn-danger" style="font-size: 12px;">🗑️</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>울트린 다목적세정제</td>
+                                        <td>세정제</td>
+                                        <td>이소프로필알코올</td>
+                                        <td>67-63-0</td>
+                                        <td><span class="status-progress">초기 검토</span></td>
+                                        <td>🚫 미할당</td>
+                                        <td>2025-04-18</td>
+                                        <td>
+                                            <button class="btn btn-primary" style="font-size: 12px;">🔍</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">✏️</button>
+                                            <button class="btn btn-danger" style="font-size: 12px;">🗑️</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>세이프가드 살균제</td>
+                                        <td>살균제</td>
+                                        <td>콰타늄아몬늄</td>
+                                        <td>52918-63-5</td>
+                                        <td><span class="status-error">정보 부족</span></td>
+                                        <td>박○○</td>
+                                        <td>2025-04-15</td>
+                                        <td>
+                                            <button class="btn btn-primary" style="font-size: 12px;">🔍</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">✏️</button>
+                                            <button class="btn btn-danger" style="font-size: 12px;">🗑️</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="background: white; padding: 15px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-radius: 0 0 12px 12px;">
+                            <div style="color: #6b7280; font-size: 14px;">
+                                3개 항목 선택됨 <a href="#" style="color: #4f46e5;">선택 해제</a>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-secondary">🔍 검수 요청</button>
+                                <button class="btn btn-secondary">📊 일괄 편집</button>
+                                <button class="btn btn-secondary">🔄 내보내기</button>
+                                <button class="btn btn-danger">🗑️ 삭제</button>
+                            </div>
+                        </div>
+
+                        <div class="pagination">
+                            <button>◀</button>
+                            <button class="active">1</button>
+                            <button>2</button>
+                            <button>3</button>
+                            <button>4</button>
+                            <button>5</button>
+                            <button>▶</button>
+                        </div>
+                        <div style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 10px;">
+                            총 287개 항목 중 1-20 표시
+                        </div>
+                    </div>
+                     <div id="completed" class="tab-content"><p>대기중 내용이 여기에 표시됩니다.</p></div>
+                    <div id="pending" class="tab-content"><p>진행중 내용이 여기에 표시됩니다.</p></div>
+                    <div id="errors" class="tab-content"><p>완료 내용이 여기에 표시됩니다.</p></div>
+                    <div id="draft" class="tab-content"><p>정보 부족 내용이 여기에 표시됩니다.</p></div>
+                </div>
+
+                <div id="data-refining" class="content-section">
+                    <div style="background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px;">
+                        <div class="tabs" style="border-bottom: none; padding: 20px 20px 0 20px;">
+                            <button class="tab active" onclick="showRefiningTab(event, 'data-refining-tab-content-processing')">데이터 정제</button>
+                            <button class="tab" onclick="showRefiningTab(event, 'auto-processing')">자동 정제</button>
+                            <button class="tab" onclick="showRefiningTab(event, 'comparison')">검수</button>
+                            <button class="tab" onclick="showRefiningTab(event, 'finalized')">완료</button>
+                        </div>
+                    </div>
+
+                    <div id="data-refining-tab-content-processing" class="tab-content active">
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #ef4444;">32건</div>
+                                <div class="stat-label">오류</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #f59e0b;">5건</div>
+                                <div class="stat-label">경고</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #3b82f6;">8건</div>
+                                <div class="stat-label">검토필요</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #10b981;">12건</div>
+                                <div class="stat-label">정상 완료</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 15px;">발견된 문제점 및 제안사항</h3>
+                            
+                            <div style="background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                                <div style="color: #dc2626; font-weight: bold; margin-bottom: 5px;">❌ CAS 번호 형식 오류</div>
+                                <div style="color: #7f1d1d; font-size: 14px; margin-bottom: 10px;">
+                                    내용: 소듐라우릴황산염의 CAS 번호 형식이 올바르지 않습니다.
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <div style="font-size: 12px; color: #7f1d1d;">
+                                        입력 형식: <span style="color: #dc2626;">151-21-3</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #7f1d1d;">
+                                        정정 제안: <span style="color: #dc2626;">151-21-3</span>
+                                    </div>
+                                    <div style="margin-top: 5px;">
+                                        <button class="btn" style="background: #10b981; color: white; font-size: 12px; padding: 4px 8px;">수정 적용</button>
+                                        <button class="btn" style="background: #6b7280; color: white; font-size: 12px; padding: 4px 8px;">무시</button>
+                                        <button class="btn" style="background: #f59e0b; color: white; font-size: 12px; padding: 4px 8px;">상세 보기</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                                <div style="color: #d97706; font-weight: bold; margin-bottom: 5px;">⚠️ 함량 범위 오류</div>
+                                <div style="color: #92400e; font-size: 14px; margin-bottom: 10px;">
+                                    내용: 일부 성분의 총 함량이 100%를 초과합니다.<br>
+                                    소듐라우릴황산염: 15-20%<br>
+                                    성분 B (예시): 5-10%<br>
+                                    정제수 (예시): 70-80%
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <div style="font-size: 12px; color: #92400e;">
+                                        정정 제안 (예시): <span style="color: #d97706;">정제수 함량을 65-75%로 조정</span>
+                                    </div>
+                                    <div style="margin-top: 5px;">
+                                        <button class="btn" style="background: #10b981; color: white; font-size: 12px; padding: 4px 8px;">수정 적용</button>
+                                        <button class="btn" style="background: #6b7280; color: white; font-size: 12px; padding: 4px 8px;">무시</button>
+                                        <button class="btn" style="background: #f59e0b; color: white; font-size: 12px; padding: 4px 8px;">상세 보기</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 15px;">
+                                <div style="color: #059669; font-weight: bold; margin-bottom: 5px;">✅ 독성 정보 표준화 제안</div>
+                                <div style="color: #065f46; font-size: 14px; margin-bottom: 10px;">
+                                    성분들의 안전성에 대한 설명을 표준화할 수 있습니다.<br>
+                                    현재 독성 정보 예시: <span style="color: #059669;">에탄올과 혼용 시 안전함</span><br>
+                                    표준화 제안: <span style="color: #059669;">"안전성 확인됨", "주의 필요" 등 일관된 용어 사용</span>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <div style="margin-top: 5px;">
+                                        <button class="btn" style="background: #10b981; color: white; font-size: 12px; padding: 4px 8px;">자동 정제</button>
+                                        <button class="btn" style="background: #f59e0b; color: white; font-size: 12px; padding: 4px 8px;">무시</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <h3 style="margin-bottom: 15px;">정제 전후 데이터 비교</h3>
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>항목</th>
+                                            <th>원본 데이터</th>
+                                            <th>정제된 데이터</th>
+                                            <th>상태</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>제품명</td>
+                                            <td>클린원시 주방세정</td>
+                                            <td>클린원시 주방세정</td>
+                                            <td><span class="status-badge status-complete">정제완료</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>CAS 번호</td>
+                                            <td>151-21-3</td>
+                                            <td>151-21-3</td>
+                                            <td><span class="status-badge status-complete">정제완료</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>함량</td>
+                                            <td>15-20%</td>
+                                            <td>15-20%</td>
+                                            <td><span class="status-badge status-complete">정제완료</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>성분명</td>
+                                            <td>Ethanol</td>
+                                            <td>에탄올</td>
+                                            <td><span class="status-badge status-progress">자료수정</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>출처</td>
+                                            <td>(정보)</td>
+                                            <td>제조사 MSDS</td>
+                                            <td><span class="status-badge status-progress">추가수정</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-header">
+                                <h3 class="card-title">화학 정보 자동 정제</h3>
+                                <div>
+                                    <button class="btn btn-secondary">초기화</button>
+                                    <button class="btn btn-primary">자동 정제</button>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <div class="info-label">자동 정제 범위</div>
+                                <div style="margin-top: 10px;">
+                                    <label><input type="checkbox" checked> CAS 번호 형식 자동 수정</label><br>
+                                    <label><input type="checkbox" checked> SMILES 구조식 자동 생성</label><br>
+                                    <label><input type="checkbox" checked> 기본 독성 정보 자동 입력</label><br>
+                                    <label><input type="checkbox"> 규제 정보 자동 연동</label>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <div class="info-label">정보 출처 선택</div>
+                                <select style="width: 100%; margin-top: 10px;">
+                                    <option>화학물질정보시스템 (NCIS)</option>
+                                    <option>ECHA Database</option>
+                                    <option>PubChem</option>
+                                    <option>ChemSpider</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-primary" style="width: 100%;">🔧 정제 규칙 관리</button>
+                        </div>
+                    </div>
+                     <div id="auto-processing" class="tab-content">
+                        <p>자동 정제 설정 및 결과가 여기에 표시됩니다.</p>
+                    </div>
+                    <div id="comparison" class="tab-content">
+                        <p>데이터 검수 및 비교 내용이 여기에 표시됩니다.</p>
+                    </div>
+                    <div id="finalized" class="tab-content">
+                        <p>최종 완료된 데이터 목록이 여기에 표시됩니다.</p>
+                    </div>
+                </div>
+
+                <div id="data-processing" class="content-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">ChemiGuard v1.0 - 설명문 생성 시스템</h2>
+                            <div>
+                                <button class="btn btn-secondary">🔄 초기화</button>
+                                <button class="btn btn-success">🤖 설명문 생성</button>
+                                <button class="btn btn-success">💾 저장</button>
+                            </div>
+                        </div>
+
+                        <div class="tabs">
+                            <button class="tab active" onclick="showProcessingTab(event, 'main-component')">📋 주성분 설명문</button>
+                            <button class="tab" onclick="showProcessingTab(event, 'toxicity-info')">⚠️ 독성 설명문</button>
+                            <button class="tab" onclick="showProcessingTab(event, 'warning-notes')">🚨 경고문 및 주의사항</button>
+                        </div>
+
+                        <div class="data-processing-grid">
+                            <div>
+                                <div id="main-component" class="tab-content active">
+                                    <div class="chemical-info">
+                                        <div class="info-group">
+                                            <div class="info-label">성분명</div>
+                                            <div class="info-value">소듐라우릴황산염</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">CAS 번호</div>
+                                            <div class="info-value">151-21-3 <span class="icon" style="cursor:pointer;" title="복사">📋</span></div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">함량</div>
+                                            <div class="info-value">15-20%</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">용도</div>
+                                            <div class="info-value">세정제</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px;">
+                                        <div class="info-label">GHS 코드</div>
+                                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                            <span class="ghs-code">H315</span>
+                                            <span class="ghs-code">H318</span>
+                                            <span class="ghs-code">H412</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px;">
+                                        <div class="info-label">LD50</div>
+                                        <div class="info-value">1200 mg/kg (경구, 쥐)</div>
+                                    </div>
+
+                                    <div style="margin-top: 20px;">
+                                        <div class="info-label">설명 대상 선택</div>
+                                        <div style="margin-top: 10px;">
+                                            <label><input type="radio" name="component_audience" checked> 일반인용</label><br>
+                                            <label><input type="radio" name="component_audience"> 전문가용</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="guidelines-box" style="margin-top: 20px;">
+                                        <div style="font-size: 14px; color: #0369a1;">
+                                            📝 주성분 설명문 작성 가이드라인<br><br>
+                                            • 성분의 물리화학적 특성 및 기능 설명 (1문장)<br>
+                                            • 주된 사용 목적 및 기대 효과 설명 (1문장)<br>
+                                            • 주요 주의사항 (1-2문장)
+                                        </div>
+                                        <div style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+                                            ⚡ 필수 포함 요소: 성분명, 주요 기능, 사용 목적, 핵심 주의사항
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px;">
+                                        <label class="info-label">📝 설명문 작성</label>
+                                        <textarea style="height: 120px; margin-top: 10px;" placeholder="주성분에 대한 설명문을 작성하세요...">소듐라우릴황산염은 강력한 세정력과 발포작용을 가진 음이온성 계면활성제로, 다양한 세정제와 화장품에 널리 사용됩니다. 이 성분은 기름과 오염물질을 효과적으로 제거하며 풍부한 거품을 생성하는 특성이 있습니다. 다만, 일부 사용자에게 피부 자극을 유발할 수 있으므로 민감성 피부의 경우 사용 시 주의가 필요합니다.</textarea>
+                                        <div style="font-size: 12px; color: #6b7280; margin-top: 5px;">글자 수: 143 / 권장: 150자 내외</div>
+                                    </div>
+
+                                    <div class="validation-box" style="margin-top: 20px;">
+                                        <div style="color: #059669; font-weight: bold; margin-bottom: 5px;">🎯 자동 검증 결과</div>
+                                        <div style="color: #059669;">✅ 모든 검증 항목을 통과했습니다.</div>
+                                    </div>
+
+                                    <div class="preview-box" style="margin-top: 20px;">
+                                        <div class="info-label">⏰ 실시간 미리보기</div>
+                                        <div style="font-weight: bold; margin: 10px 0;">소듐라우릴황산염은 강력한 세정력과 발포작용을 가진 음이온성 계면활성제로, 다양한 세정제와 화장품에 널리 사용됩니다. 이 성분은 기름과 오염물질을 효과적으로 제거하며 풍부한 거품을 생성하는 특성이 있습니다. 다만, 일부 사용자에게 피부 자극을 유발할 수 있으므로 민감성 피부의 경우 사용 시 주의가 필요합니다.</div>
+                                        <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                                            📊 검수 상태:<br>
+                                            • 작성일: 2025-04-30 15:30<br>
+                                            • 버전: v1.1<br>
+                                            • 검수자: 이영수
+                                        </div>
+                                    </div>
+
+                                    <div class="feedback-box" style="margin-top: 20px;">
+                                        <div style="color: #ea580c; font-size: 14px;">
+                                            ⚠️ 검수가 완료되지 않았습니다. 검수 완료 후 최종 승인됩니다.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="toxicity-info" class="tab-content">
+                                    <div class="warning-box">
+                                        <div style="color: #d97706; font-weight: bold; margin-bottom: 5px;">⚠️ 독성 정보 확인</div>
+                                        <div style="color: #92400e;">이 성분은 아래와 같은 독성 정보가 등록되어 있습니다. 설명문 작성 시 유의하십시오.</div>
+                                    </div>
+
+                                    <div class="chemical-info">
+                                        <div class="info-group">
+                                            <div class="info-label">급성 독성 (경구)</div>
+                                            <div class="info-value">LD50: 1,288 mg/kg (쥐)</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">피부 자극성</div>
+                                            <div class="info-value">중등도 자극성 (토끼)</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">눈 자극성</div>
+                                            <div class="info-value">심한 자극성 (토끼)</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">환경 독성 (어류)</div>
+                                            <div class="info-value">LC50: 7.8 mg/L (무지개송어, 96시간)</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px;">
+                                        <label class="info-label">⚠️ 독성 설명문 작성</label>
+                                        <textarea style="height: 120px; margin-top: 10px;" placeholder="독성 정보에 대한 설명문을 작성하세요...">소듐라우릴황산염은 피부와 눈에 자극을 유발할 수 있습니다. 특히 눈에 직접 접촉할 경우 심한 자극 또는 손상을 일으킬 수 있으므로 주의해야 합니다. 장기간 또는 반복적인 피부 접촉은 피부염을 유발할 수 있으며, 일부 민감한 개인에게는 알레르기 반응이 나타날 수 있습니다. 수생 환경에 유해할 수 있습니다.</textarea>
+                                    </div>
+                                </div>
+
+                                <div id="warning-notes" class="tab-content">
+                                    <div style="margin-top: 20px;">
+                                        <label class="info-label">🚨 경고문 및 주의사항</label>
+                                        <textarea style="height: 200px; margin-top: 10px;" placeholder="경고문과 주의사항을 작성하세요...">【경고】
+• 눈에 들어가지 않도록 주의하십시오.
+• 피부에 직접적인 접촉을 피하십시오.
+• 어린이의 손이 닿지 않는 곳에 보관하십시오.
+• 사용 후에는 손을 깨끗이 씻으십시오.
+
+【응급처치】
+• 눈에 들어갔을 때: 즉시 다량의 물로 15분 이상 씻어내고 의사의 진료를 받으십시오.
+• 피부에 접촉했을 때: 비누와 물로 깨끗이 씻어내십시오. 자극이 지속되면 의사의 진료를 받으십시오.
+• 삼켰을 때: 물을 마시게 하고 즉시 의사의 진료를 받으십시오. (억지로 토하게 하지 마십시오.)</textarea>
+                                    </div>
+
+                                    <div style="margin-top: 20px;">
+                                        <label class="info-label">🎯 대상별 맞춤 경고</label>
+                                        <div class="chemical-info">
+                                            <div class="info-group">
+                                                <div class="info-label">일반 사용자용</div>
+                                                <div class="info-value">사용 시 고무장갑 착용을 권장합니다.</div>
+                                            </div>
+                                            <div class="info-group">
+                                                <div class="info-label">산업/전문가용</div>
+                                                <div class="info-value">적절한 개인보호구(보안경, 보호장갑, 보호의)를 착용하십시오.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="card" style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 15px;">실시간 미리보기</h4>
+                                    <div style="background: #fafafa; border-radius: 8px; padding: 15px;">
+                                        <p style="font-weight: bold; margin-bottom: 10px;">소듐라우릴황산염은 강력한 세정력과 발포작용을 가진 음이온성 계면활성제로, 다양한 세정제와 화장품에 널리 사용됩니다. 이 성분은 기름과 오염물질을 효과적으로 제거하며 풍부한 거품을 생성하는 특성이 있습니다. 다만, 일부 사용자에게 피부 자극을 유발할 수 있으므로 민감성 피부의 경우 사용 시 주의가 필요합니다.</p>
+                                        <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                                            📊 검수 상태:<br>
+                                            • 작성일: 2025-04-30 15:30<br>
+                                            • 버전: v1.1<br>
+                                            • 검수자: 이영수
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <h4 style="margin-bottom: 15px;">검수 상태</h4>
+                                    <div style="color: #f59e0b; font-weight: bold; margin-bottom: 5px;">🟡 검수 대기 중</div>
+                                    <div style="font-size: 14px; color: #6b7280;">
+                                        작성일: 2025-04-30 15:30<br>
+                                        버전: v1.1<br>
+                                        검수자: 이영수
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <h4 style="margin-bottom: 15px;">📊 검수 피드백</h4>
+                                    <div style="background: #fffbeb; border: 1px solid #fed7aa; border-radius: 8px; padding: 15px;">
+                                        <div style="color: #ea580c; font-size: 14px;">
+                                            ⚠️ 검수가 완료되지 않았습니다. 검수 완료 후 최종 승인됩니다.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="qa-generation" class="content-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Q&A 생성: 에탄올 (64-17-5)</h2>
+                            <div>
+                                <button class="btn btn-primary">임시 저장</button>
+                                <button class="btn btn-secondary">완료</button>
+                                <button class="btn btn-danger">저장 후 다음</button>
+                            </div>
+                        </div>
+
+                        <div class="tabs">
+                            <button class="tab active" onclick="showQATab(event, 'qa-setup')">❓ Q&A 생성</button>
+                            <button class="tab" onclick="showQATab(event, 'basic-info')">📋 기본 정보</button>
+                            <button class="tab" onclick="showQATab(event, 'toxicity-data')">⚠️ 독성 정보</button>
+                            <button class="tab" onclick="showQATab(event, 'regulation-info')">📜 규제 정보</button>
+                        </div>
+
+                        <div class="data-processing-grid">
+                            <div>
+                                <div id="qa-setup" class="tab-content active">
+                                    <div style="margin-bottom: 20px;">
+                                        <h3>Q&A 생성 설정</h3>
+                                        <div style="margin-top: 15px;">
+                                            <label class="info-label">질문 대상 수준</label>
+                                            <select style="width: 100%; margin-top: 5px;">
+                                                <option>주요 성분 관련 질문</option>
+                                                <option>전문가 수준</option>
+                                                <option>일반인 수준</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-top: 15px;">
+                                            <label class="info-label">질문 유형</label>
+                                            <select style="width: 100%; margin-top: 5px;">
+                                                <option>단순 정보 요청</option>
+                                                <option>안전성 문의</option>
+                                                <option>사용법 문의</option>
+                                                <option>성분 정보 문의</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 20px;">
+                                        <label class="info-label">자동 필터 추가</label>
+                                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                            <button class="btn btn-secondary" style="font-size: 12px;">국가별 필터</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">정보 유형</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">분류</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">난이도</button>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 20px;">
+                                        <h4>Q&A 작성</h4>
+                                        <div style="background: #f8fafc; border-radius: 8px; padding: 15px; margin: 10px 0;">
+                                            <div style="font-weight: bold; margin-bottom: 5px;">질문 내용</div>
+                                            <div style="margin-bottom: 10px; font-size:14px; color: #6b7280;">
+                                                생성할 Q&A의 질문을 입력하세요.<br>
+                                                예: 소듐라우릴황산염과 에탄올을 함께 사용해도 안전한가요?
+                                            </div>
+                                        </div>
+                                        <textarea style="height: 100px; margin-top: 10px;" placeholder="예: 소듐라우릴황산염과 에탄올을 함께 사용해도 안전한가요?">소듐라우릴황산염과 에탄올을 함께 사용해도 안전한가요?</textarea>
+                                    </div>
+
+                                    <div style="margin-bottom: 20px;">
+                                        <div style="background: #f8fafc; border-radius: 8px; padding: 15px; margin: 10px 0;">
+                                            <div style="font-weight: bold; margin-bottom: 5px;">답변 내용</div>
+                                            <div style="margin-bottom: 10px; font-size:14px; color: #6b7280;">
+                                                생성할 Q&A의 답변을 입력하거나 AI를 통해 생성하세요.<br>
+                                                예: 에탄올의 LD50(경구, 쥐) 값은 7080mg/kg으로, 이는 실험동물 50%가 사망에 이르는 양을 의미합니다. 두 성분을 혼합 사용할 경우의 안전성은 별도 확인이 필요합니다.
+                                            </div>
+                                        </div>
+                                        <textarea style="height: 150px; margin-top: 10px;" placeholder="생성된 답변이 여기에 표시되거나, 직접 답변을 입력합니다.">에탄올(LD50: 7080mg/kg, 경구, 쥐)은 일반적으로 사용 농도에서 안전성이 확보된 물질입니다. 소듐라우릴황산염과의 혼합 사용에 대한 안전성은 해당 제품의 전체 성분 배합 및 사용 환경에 따라 다를 수 있습니다. 사용 전 제품 라벨의 사용방법 및 주의사항을 반드시 확인하시고, 필요시 전문가와 상담하는 것이 좋습니다.
+
+두 물질 모두 피부 자극을 유발할 수 있으므로, 민감한 피부의 경우 접촉에 주의하고 보호 장갑 등을 사용하는 것이 안전합니다. 눈에 들어가지 않도록 각별히 주의해야 합니다.</textarea>
+                                    </div>
+
+                                    <div style="margin-bottom: 20px;">
+                                        <button class="btn btn-success" style="margin-right: 10px;">💾 저장</button>
+                                        <button class="btn btn-secondary">🔄 추가 Q&A 생성</button>
+                                    </div>
+                                </div>
+
+                                <div id="basic-info" class="tab-content">
+                                    <div class="chemical-info">
+                                        <div class="info-group">
+                                            <div class="info-label">성분명</div>
+                                            <div class="info-value">에탄올</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">CAS 번호</div>
+                                            <div class="info-value">64-17-5</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">분자식</div>
+                                            <div class="info-value">C₂H₆O</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">주요 용도</div>
+                                            <div class="info-value">용매, 살균소독제, 연료 등</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px;">
+                                        <div class="info-label">GHS 분류 및 표지</div>
+                                        <div style="margin-top: 10px;">
+                                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                                <span class="ghs-code">H225</span> <span class="ghs-code">H319</span> </div>
+                                            <div>
+                                                <span style="font-size: 14px;">위험 문구: H225, H319</span><br>
+                                                <span style="font-size: 14px;">신호어: 위험 (Danger)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="toxicity-data" class="tab-content">
+                                    <p>에탄올의 상세 독성 정보가 여기에 표시됩니다. (예: LD50, LC50, 피부/눈 자극성 정보 등)</p>
+                                </div>
+                                <div id="regulation-info" class="tab-content">
+                                    <p>에탄올 관련 국내외 규제 정보가 여기에 표시됩니다.</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="card" style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 15px;">에탄올 정보 요약</h4>
+                                    <div class="chemical-info" style="grid-template-columns: 1fr;">
+                                        <div class="info-group">
+                                            <div class="info-label">CAS 번호</div>
+                                            <div class="info-value">64-17-5</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">분자식</div>
+                                            <div class="info-value">C₂H₆O</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">주요 함량 (제품 내)</div>
+                                            <div class="info-value">70-80% (예시값)</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">주요 용도 (제품 내)</div>
+                                            <div class="info-value">살균소독 (활성 성분)</div>
+                                        </div>
+                                        <div class="info-group">
+                                            <div class="info-label">GHS 코드</div>
+                                            <div class="info-value">H225, H319</div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;">📊 상세 정보 보기</button>
+                                </div>
+
+                                <div class="card" style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 15px;">참고 자료</h4>
+                                    <div style="color: #6b7280; font-size: 14px;">
+                                        주요 정보:<br>
+                                        LD50(경구, 쥐): 7080 mg/kg<br>
+                                        LC50(흡입, 쥐): 124.7 mg/L (4시간)<br>
+                                        LD50(경피, 토끼): 15800 mg/kg
+                                    </div>
+                                    <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;">ℹ️ 출처 확인</button>
+                                </div>
+
+                                <div class="card" style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 15px;">안전 사용 기준</h4>
+                                    <div style="color: #6b7280; font-size: 14px;">
+                                        예방조치문구 예시:<br>
+                                        P210: 열·스파크·화염·고열로부터 멀리하시오 – 금연.<br>
+                                        P233: 용기를 단단히 밀폐하시오.
+                                    </div>
+                                    <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;">ℹ️ 주의사항 전체 보기</button>
+                                </div>
+
+                                <div class="card">
+                                    <h4 style="margin-bottom: 15px;">AI 작업 로그</h4>
+                                    <div style="color: #6b7280; font-size: 14px;">
+                                        - 질문 기반 답변 자동 생성<br>
+                                        - 참고 자료 기반 정보 요약<br>
+                                        - 답변 길이 및 스타일 조절<br>
+                                        - 추가 고려 사항: 최신 규제, 사용자 피드백 등
+                                    </div>
+                                    <button class="btn btn-success" style="width: 100%; margin-top: 10px;">🤖 AI 답변 생성</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 30px;">
+                            <h3 style="margin-bottom: 15px;">이미 생성된 Q&A (3건)</h3>
+                            <div style="margin-bottom: 15px;">
+                                <select style="margin-right: 10px;">
+                                    <option>모든 유형</option>
+                                    <option>안전성 문의</option>
+                                    <option>사용법 문의</option>
+                                </select>
+                                <button class="btn btn-danger" style="font-size:12px; padding: 6px 10px;">❌ 선택 삭제</button>
+                                <button class="btn btn-secondary" style="font-size:12px; padding: 6px 10px;">📝 일괄 편집</button>
+                            </div>
+
+                            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                                <div style="background: #e0e7ff; border-radius: 4px; padding: 10px; margin-bottom: 10px;">
+                                    <div style="font-size: 12px; color: #3730a3; margin-bottom: 5px;">주성분 관련</div>
+                                    <div style="font-weight: bold;">소듐라우릴황산염과 에탄올 혼용 시 안전한가요?</div>
+                                </div>
+                                <div style="margin-bottom: 10px; font-size: 14px;">
+                                    에탄올(LD50: 7080mg/kg, 경구, 쥐)은 일반적으로 사용 농도에서 안전성이 확보된 물질이나, 소듐라우릴황산염과의 혼합 사용에 대한 안전성은 특정 제품의 전체 배합 및 사용 환경에 따라 다를 수 있습니다. 사용 시에는 반드시 제품 라벨의 지시사항을 확인하고, 필요시 전문가와 상담하십시오.
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary" style="font-size: 12px;">❌</button>
+                                    <button class="btn btn-secondary" style="font-size: 12px;">📝</button>
+                                </div>
+                            </div>
+
+                            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                                <div style="background: #fef3c7; border-radius: 4px; padding: 10px; margin-bottom: 10px;">
+                                    <div style="font-size: 12px; color: #92400e; margin-bottom: 5px;">독성 관련</div>
+                                    <div style="font-weight: bold;">에탄올의 LD50 값과 그 의미는 무엇인가요?</div>
+                                </div>
+                                <div style="margin-bottom: 10px; font-size: 14px;">
+                                    에탄올의 LD50 값(경구, 쥐)은 7080mg/kg입니다. 이는 해당 경로로 투여 시 실험동물의 50%를 치사시키는 양을 의미하며, 물질의 급성 독성 수준을 나타내는 지표 중 하나입니다.
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-secondary" style="font-size: 12px;">❌</button>
+                                    <button class="btn btn-secondary" style="font-size: 12px;">📝</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="qa-validation" class="content-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">데이터 검수</h2>
+                            <div>
+                                <button class="btn btn-secondary">🔍 고급 검색</button>
+                                <button class="btn btn-primary">📊 새 데이터 추가</button>
+                            </div>
+                        </div>
+
+                        <div class="tabs" style="margin-bottom: 20px;">
+                            <button class="tab active" onclick="showValidationTab(event, 'pending-review')">검수 대기 (43)</button>
+                            <button class="tab" onclick="showValidationTab(event, 'completed-review')">검수 완료 (152)</button>
+                            <button class="tab" onclick="showValidationTab(event, 'rework-list')">재작업 요청 (28)</button>
+                            <button class="tab" onclick="showValidationTab(event, 'auto-approved')">자동 승인 (28)</button>
+                        </div>
+
+                        <div id="pending-review" class="tab-content active">
+                            <div class="card" style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <div>
+                                        <h3>제품 정보: 클린원시 주방세정</h3>
+                                        <div style="color: #6b7280; font-size: 14px;">주성분: 소듐라우릴황산염 (CAS: 151-21-3)</div>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-secondary">📝 변경 이력 보기</button>
+                                        <button class="btn btn-primary">📊 전체 목록으로</button>
+                                    </div>
+                                </div>
+
+                                <div style="background: #f8fafc; border-radius: 8px; padding: 15px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px;">
+                                        <div>
+                                            <div style="font-weight: bold; margin-bottom: 5px;">카테고리</div>
+                                            <div style="color: #6b7280;">세정제</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: bold; margin-bottom: 5px;">담당 검수자</div>
+                                            <div style="color: #6b7280;">김민준</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: bold; margin-bottom: 5px;">최종 작업일</div>
+                                            <div style="color: #6b7280;">2025-04-25</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: bold; margin-bottom: 5px;">최초 작성자</div>
+                                            <div style="color: #6b7280;">이하나</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="margin-bottom: 20px;">
+                                <h3 style="margin-bottom: 15px;">주성분 정보</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                    <div>
+                                        <div style="font-weight: bold; margin-bottom: 5px;">성분명</div>
+                                        <div style="color: #6b7280;">소듐라우릴황산염</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: bold; margin-bottom: 5px;">CAS 번호</div>
+                                        <div style="color: #6b7280;">151-21-3</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: bold; margin-bottom: 5px;">함량</div>
+                                        <div style="color: #6b7280;">15-20%</div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 10px;">GHS 분류 및 표지</h4>
+                                    <div style="display: flex; gap: 20px; align-items: flex-start;">
+                                        <div>
+                                            <div style="font-size: 14px; margin-bottom: 5px; font-weight:500;">현재 정보</div>
+                                            <div style="display: flex; gap: 10px;  margin-bottom: 5px;">
+                                                <span class="ghs-code">H315</span>
+                                                <span class="ghs-code">H318</span>
+                                            </div>
+                                            <div style="font-size: 12px; color: #6b7280;">
+                                                그림문자: GHS05, GHS07<br>
+                                                신호어: 위험 (Danger)
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 14px; margin-bottom: 5px; font-weight:500;">제안 변경사항</div>
+                                            <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                                                <span class="ghs-code">H315</span>
+                                                <span class="ghs-code">H318</span>
+                                                <span class="ghs-code" style="background: #f59e0b;">H411</span>
+                                            </div>
+                                            <div style="font-size: 12px; color: #6b7280;">
+                                                그림문자: GHS05, GHS07, <span style="color: #f59e0b;">GHS09</span><br>
+                                                신호어: 위험 (Danger)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 10px;">독성값</h4>
+                                    <div class="table-container">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>독성 유형</th>
+                                                    <th>수치</th>
+                                                    <th>단위</th>
+                                                    <th>시험종</th>
+                                                    <th>노출 경로</th>
+                                                    <th>노출 시간</th>
+                                                    <th>출처</th>
+                                                    <th>확인</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>급성독성 LD50</td>
+                                                    <td>1200</td>
+                                                    <td>mg/kg</td>
+                                                    <td>랫드(Rat)</td>
+                                                    <td>경구</td>
+                                                    <td>-</td>
+                                                    <td>ECHA</td>
+                                                    <td><button class="btn btn-secondary" style="font-size:10px; padding:2px 6px;">상세</button></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>급성독성 LC50</td>
+                                                    <td>>3.9</td>
+                                                    <td>mg/L</td>
+                                                    <td>랫드(Rat)</td>
+                                                    <td>흡입 (더스트/미스트)</td>
+                                                    <td>1시간</td>
+                                                    <td>HSDB, ECHA</td>
+                                                    <td><button class="btn btn-secondary" style="font-size:10px; padding:2px 6px;">상세</button></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>급성독성 LD50</td>
+                                                    <td>>2000</td>
+                                                    <td>mg/kg</td>
+                                                    <td>토끼(Rabbit)</td>
+                                                    <td>경피</td>
+                                                    <td>-</td>
+                                                    <td>ECHA</td>
+                                                    <td><button class="btn btn-secondary" style="font-size:10px; padding:2px 6px;">상세</button></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 10px;">검수 체크리스트 및 의견</h4>
+                                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px;">
+                                        <div style="color: #856404; font-weight: bold; margin-bottom: 10px;">🟡 주요 검토 사항</div>
+                                        <div style="color: #6c5300; margin-bottom: 15px; font-size:14px;">
+                                            • GHS 정보 업데이트: 수생 환경 유해성 (만성) Category 2 (H411) 및 GHS09 그림문자 추가 필요. (ECHA 데이터베이스 2024-11 기준)<br>
+                                            • 흡입 독성 LC50 값 (1시간 노출) >3.9 mg/L 확인. 일부 자료에서 4시간 노출 값과 혼용되어 있어 명확한 기준 시간 명시 필요.
+                                        </div>
+                                        <div style="margin-bottom: 15px;">
+                                            <label for="reviewer_comment" class="info-label">검수자 의견:</label>
+                                            <textarea id="reviewer_comment" style="height: 80px; margin-top: 5px;" placeholder="추가 의견을 입력하세요..."></textarea>
+                                        </div>
+                                        <div style="display: flex; gap: 10px;">
+                                            <button class="btn btn-success" style="font-size: 12px;">✅ 승인</button>
+                                            <button class="btn btn-danger" style="font-size: 12px;">❌ 재작업 요청</button>
+                                            <button class="btn btn-warning" style="font-size: 12px;">📋 수정 후 승인</button>
+                                            <button class="btn btn-secondary" style="font-size: 12px;">ℹ️ 피드백 가이드라인</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 10px;">검수 이력</h4>
+                                    <div class="history-timeline">
+                                        <div class="history-item">
+                                            <div style="font-weight: bold; color: #059669;">데이터 입력 및 초기 검토</div>
+                                            <div style="font-size: 12px; color: #6b7280;">2025-04-25 14:15 (이하나)</div>
+                                            <div style="font-size: 14px; margin-top: 5px;">기본 정보 및 독성 정보 초안 작성 완료.</div>
+                                            <div style="background: #e0e7ff; padding: 8px; border-radius: 4px; margin-top: 5px; font-size: 12px; color: #3730a3;">
+                                                <strong>상태:</strong> 검수 대기
+                                            </div>
+                                        </div>
+                                        <div class="history-item">
+                                            <div style="font-weight: bold; color: #1d4ed8;">1차 검수</div>
+                                            <div style="font-size: 12px; color: #6b7280;">2025-04-30 09:35 (박서준)</div>
+                                            <div style="font-size: 14px; margin-top: 5px;">일부 수치 데이터 및 출처 정보 보완. GHS 분류 재확인 필요.</div>
+                                            <div style="background: #fffbeb; padding: 8px; border-radius: 4px; margin-top: 5px; font-size: 12px; color: #d97706;">
+                                                <strong>피드백:</strong> 수생 독성 관련 정보 추가 검토 요청
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="completed-review" class="tab-content">
+                            <p>검수 완료된 데이터 목록이 여기에 표시됩니다.</p>
+                        </div>
+                        <div id="rework-list" class="tab-content">
+                            <p>재작업 요청된 데이터 목록이 여기에 표시됩니다.</p>
+                        </div>
+                        <div id="auto-approved" class="tab-content">
+                            <p>자동 승인된 데이터 목록이 여기에 표시됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 메뉴 네비게이션
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            const contentSections = document.querySelectorAll('.content-section');
+            const pageTitle = document.getElementById('page-title');
+
+            // 페이지 제목 매핑
+            const pageTitles = {
+                'dashboard': '관리자 대시보드',
+                'data-acquisition': '데이터 획득',
+                'data-management': '데이터 관리',
+                'data-refining': '데이터 정제',
+                'data-processing': '데이터 가공',
+                'qa-generation': 'Q&A 생성',
+                'qa-validation': '데이터 검수'
+            };
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    menuItems.forEach(menu => menu.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const targetSectionId = this.getAttribute('data-section');
+                    contentSections.forEach(section => section.classList.remove('active'));
+                    
+                    const targetSectionElement = document.getElementById(targetSectionId);
+                    if (targetSectionElement) {
+                        targetSectionElement.classList.add('active');
+                         // 해당 섹션의 첫 번째 탭을 활성화 (만약 탭이 있다면)
+                        const firstTabButton = targetSectionElement.querySelector('.tabs .tab');
+                        if (firstTabButton) {
+                            const correspondingTabContentId = firstTabButton.getAttribute('onclick').match(/'([^']+)'/)[1];
+                            // 모든 탭 함수들이 showTab을 내부적으로 호출하거나 비슷한 로직을 사용한다고 가정
+                            if (targetSectionId === 'data-management') showDataTab({target: firstTabButton}, correspondingTabContentId);
+                            else if (targetSectionId === 'data-refining') showRefiningTab({target: firstTabButton}, correspondingTabContentId);
+                            else if (targetSectionId === 'data-processing') showProcessingTab({target: firstTabButton}, correspondingTabContentId);
+                            else if (targetSectionId === 'qa-generation') showQATab({target: firstTabButton}, correspondingTabContentId);
+                            else if (targetSectionId === 'qa-validation') showValidationTab({target: firstTabButton}, correspondingTabContentId);
+                        }
+                    }
+                    
+                    pageTitle.textContent = pageTitles[targetSectionId] || '관리자 대시보드';
+                });
+            });
+
+            // 초기 로드 시 활성 메뉴에 해당하는 첫 탭 활성화
+            const initiallyActiveMenuItem = document.querySelector('.sidebar-menu .menu-item.active');
+            if (initiallyActiveMenuItem) {
+                const activeSectionId = initiallyActiveMenuItem.getAttribute('data-section');
+                const activeSectionElement = document.getElementById(activeSectionId);
+                if (activeSectionElement) {
+                    const firstTabButton = activeSectionElement.querySelector('.tabs .tab');
+                     if (firstTabButton) { // 첫번째 버튼이 기본 active 상태일 수 있으므로, 그 ID를 사용
+                        const correspondingTabContentId = firstTabButton.getAttribute('onclick').match(/'([^']+)'/)[1];
+                         if (activeSectionId === 'data-management') showDataTab({target: firstTabButton}, correspondingTabContentId);
+                         else if (activeSectionId === 'data-refining') showRefiningTab({target: firstTabButton}, correspondingTabContentId);
+                         else if (activeSectionId === 'data-processing') showProcessingTab({target: firstTabButton}, correspondingTabContentId);
+                         else if (activeSectionId === 'qa-generation') showQATab({target: firstTabButton}, correspondingTabContentId);
+                         else if (activeSectionId === 'qa-validation') showValidationTab({target: firstTabButton}, correspondingTabContentId);
+                     }
+                }
+            }
+        });
+
+        function showTab(event, tabId, sectionId) {
+            const sectionElement = document.getElementById(sectionId);
+            if (!sectionElement) return;
+
+            const tabContents = sectionElement.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            const tabs = sectionElement.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const targetContent = document.getElementById(tabId);
+            if (targetContent) {
+                 targetContent.classList.add('active');
+            }
+            if (event && event.target) { // event.target은 클릭된 버튼이어야 함
+                event.target.classList.add('active');
+            }
+        }
+
+        function showDataTab(event, tabId) {
+            showTab(event, tabId, 'data-management');
+        }
+
+        function showRefiningTab(event, tabId) {
+            showTab(event, tabId, 'data-refining');
+        }
+
+        function showProcessingTab(event, tabId) {
+            showTab(event, tabId, 'data-processing');
+        }
+
+        function showQATab(event, tabId) {
+            showTab(event, tabId, 'qa-generation');
+        }
+
+        function showValidationTab(event, tabId) {
+            showTab(event, tabId, 'qa-validation');
+        }
+        
+
+        function viewDetail(type) {
+            const modal = document.getElementById('detailModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            if (type === 'ethanol') {
+                modalContent.innerHTML = `
+                    <h2>에탄올 (CAS: 64-17-5) 상세 정보</h2>
+                    <div class="chemical-info">
+                        <div class="info-group">
+                            <div class="info-label">성분명</div>
+                            <div class="info-value">에탄올 (Ethanol)</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">CAS 번호</div>
+                            <div class="info-value">64-17-5</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">분자식</div>
+                            <div class="info-value">C₂H₆O</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">함량 (예시 제품)</div>
+                            <div class="info-value">70-80%</div>
+                        </div>
+                    </div>
+                    <h3>주요 독성 정보</h3>
+                    <div class="table-container">
+                        <table class="table">
+                            <tr><td>급성 독성 LD50 (경구, 랫드)</td><td>7080 mg/kg</td></tr>
+                            <tr><td>급성 독성 LC50 (흡입, 랫드)</td><td>124.7 mg/L (4시간)</td></tr>
+                            <tr><td>급성 독성 LD50 (경피, 토끼)</td><td>15800 mg/kg</td></tr>
+                        </table>
+                    </div>
+                `;
+            } else if (type === 'sls') {
+                modalContent.innerHTML = `
+                    <h2>소듐라우릴황산염 (CAS: 151-21-3) 상세 정보</h2>
+                    <div class="chemical-info">
+                        <div class="info-group">
+                            <div class="info-label">성분명</div>
+                            <div class="info-value">소듐라우릴황산염 (Sodium Lauryl Sulfate)</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">CAS 번호</div>
+                            <div class="info-value">151-21-3</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">함량 (예시 제품)</div>
+                            <div class="info-value">15-20%</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">주요 용도</div>
+                            <div class="info-value">계면활성제, 세정제</div>
+                        </div>
+                    </div>
+                    <h3>GHS 정보 (예시)</h3>
+                    <div style="margin: 10px 0;">
+                        <span class="ghs-code">H315</span> (피부에 자극을 일으킴) <br>
+                        <span class="ghs-code">H318</span> (눈에 심한 손상을 일으킴) <br>
+                        <span class="ghs-code">H411</span> (장기적인 영향에 의해 수생생물에게 유독함)
+                    </div>
+                `;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        const closeModalButton = document.querySelector('#detailModal .close');
+        if(closeModalButton) {
+            closeModalButton.onclick = function() {
+                document.getElementById('detailModal').style.display = 'none';
+            }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        document.querySelectorAll('.upload-area').forEach(area => {
+            area.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.style.backgroundColor = '#e0e7ff';
+            });
+
+            area.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.style.backgroundColor = '#f9fafb';
+            });
+
+            area.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.style.backgroundColor = '#f9fafb';
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    alert('파일이 업로드되었습니다: ' + e.dataTransfer.files[0].name);
+                }
+            });
+
+            area.addEventListener('click', function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.xlsx,.xls,.csv';
+                input.onchange = function() {
+                    if (this.files && this.files.length > 0) {
+                        alert('파일이 선택되었습니다: ' + this.files[0].name);
+                    }
+                };
+                input.click();
+            });
+        });
+
+        document.querySelectorAll('textarea').forEach(textarea => {
+            let saveTimeout;
+            textarea.addEventListener('input', function() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    console.log('내용 자동 저장 시도: ' + (this.id || 'textarea')); 
+                }, 3000);
+            });
+        });
+
+    </script>
+</body>
+</html>
