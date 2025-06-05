@@ -39,14 +39,10 @@ function App() {
           </Route>
         )}
 
-        {/* 로그인 안 되어 있을 경우 모든 경로에서 로그인으로 리디렉션 */}
-        {!isLoggedIn && <Route path="*" element={<Navigate to="/login" replace />} />}
+        {/* 루트 경로에서 자동 분기 제거됨 */}
 
-        {/* 루트 경로에서 자동 분기 */}
-        <Route
-          path="/"
-          element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />}
-        />
+        {/* 모든 경로에서 로그인 상태에 따라 리디렉션 */}
+        <Route path="*" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />} />
       </Routes>
     </Router>
   );
