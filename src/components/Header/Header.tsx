@@ -1,9 +1,11 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useUserStore } from '../../stores/userStore';
 
 const Header = () => {
   const location = useLocation();
-  const username = 'admin'; // 하드코딩
+  const { userInfo } = useUserStore();
+  const username = userInfo?.name || '사용자';
 
   // 경로에 따라 페이지명 설정
   const getPageTitle = () => {
@@ -66,7 +68,7 @@ const Header = () => {
             lineHeight: 1,
             }}
         >
-            1
+            0
         </span>
         </button>
 

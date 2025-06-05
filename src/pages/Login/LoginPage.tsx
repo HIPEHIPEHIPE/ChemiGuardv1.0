@@ -21,65 +21,98 @@ const LoginPage = () => {
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
+  const isPasswordValid = (pw: string) => {
+    return pw.length >= 6 &&
+      /[a-z]/.test(pw) &&
+      /[A-Z]/.test(pw) &&
+      /[0-9]/.test(pw);
+  };
+
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: id,
       password: pw,
     });
+
     if (error) {
       setLoginError('E-mail 또는 비밀번호가 틀렸습니다.');
     } else {
       setLoginError('');
+      login(); // 로그인 상태만 true로 설정됨
+      if (data.user) {
+        const { data: userData, error: userError } = await supabase
+          .from('workers')
+          .select('name, organization')
+          .eq('id', data.user.id)
+          .single();
+
+        if (userError || !userData) {
+          setLoginError('사용자 정보를 불러오는 데 실패했습니다.');
+          return;
+        }
+
+        useUserStore.getState().setUserInfo({
+          id: data.user.id,
+          email: data.user.email ?? '',
+          name: userData.name,
+          organization: userData.organization,
+        });
+      }
       navigate('/dashboard');
     }
   };
 
-const handleRegister = async () => {
-  if (regPassword !== regConfirmPassword) {
-    setRegisterError('비밀번호가 일치하지 않습니다.');
-    return;
-  }
-
-  const { data, error } = await supabase.auth.signUp({
-    email: regEmail,
-    password: regPassword,
-    options: {
-      emailRedirectTo: 'https://chemicalguard.netlify.app/signup-success',
-  },
-  });
-
-  if (error) {
-    setRegisterError('회원가입 실패: ' + error.message);
-    return;
-  }
-
-  // 유저 생성 성공 시 workers 테이블에 추가
-  const user = data.user;
-
-  if (user) {
-    const { error: insertError } = await supabase.from('workers').insert({
-      id: user.id,
-      email: regEmail,
-      name: regName,
-      organization: regOrg,
-    });
-
-    if (insertError) {
-      setRegisterError('workers 테이블 저장 실패: ' + insertError.message);
+  const handleRegister = async () => {
+    if (regPassword !== regConfirmPassword) {
+      setRegisterError('비밀번호가 일치하지 않습니다.');
       return;
     }
 
-    alert('인증메일이 발송되었습니다. 이메일 인증을 완료해주세요.');
-    useUserStore.getState().setUserInfo({
-      id: user.id,
+    if (!isPasswordValid(regPassword)) {
+      setRegisterError('비밀번호는 6자 이상이며, 영문 대/소문자 및 숫자를 포함해야 합니다.');
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
       email: regEmail,
-      name: regName,
-      organization: regOrg,
+      password: regPassword,
+      options: {
+        emailRedirectTo: 'https://chemicalguard.netlify.app/signup-success',
+      },
     });
-    setRegisterError('');
-    setShowModal(false);
-  }
-};
+
+    if (error) {
+      setRegisterError('회원가입 실패: ' + error.message);
+      return;
+    }
+
+    // 유저 생성 성공 시 workers 테이블에 추가
+    const user = data.user;
+
+    if (user) {
+      const { error: insertError } = await supabase.from('workers').insert({
+        id: user.id,
+        email: regEmail,
+        name: regName,
+        organization: regOrg,
+      });
+
+      if (insertError) {
+        setRegisterError('workers 테이블 저장 실패: ' + insertError.message);
+        return;
+      }
+
+      alert('인증메일이 발송되었습니다. 이메일 인증을 완료해주세요.');
+      useUserStore.getState().setUserInfo({
+        id: user.id,
+        email: regEmail,
+        name: regName,
+        organization: regOrg,
+      });
+      setRegisterError('');
+      setShowModal(false);
+    }
+  };
 
   return (
     <div
@@ -103,6 +136,7 @@ const handleRegister = async () => {
       >
         <h2 style={{ textAlign: 'center', marginBottom: 30 }}>🧪 ChemiGuard 로그인</h2>
         <input
+          type="email"
           placeholder="email"
           value={id}
           onChange={(e) => setId(e.target.value)}
