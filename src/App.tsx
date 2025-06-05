@@ -10,6 +10,8 @@ import DataRefiningPage from './pages/DataRefining/DataRefiningPage';
 import DataProcessingPage from './pages/DataProcessing/DataProcessingPage';
 import QaGenerationPage from './pages/QaGeneration/QaGenerationPage';
 import QaValidationPage from './pages/QaValidation/QaValidationPage';
+import SignupSuccessPage from './pages/SignupSuccess/SignupSuccessPage';
+
 
 import MainLayout from './layouts/MainLayout';
 
@@ -21,6 +23,7 @@ function App() {
       <Routes>
         {/* 로그인 페이지는 누구나 접근 가능 */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup-success" element={<SignupSuccessPage />} />
 
         {/* 로그인된 사용자만 접근 가능한 메인 레이아웃 */}
         {isLoggedIn && (
