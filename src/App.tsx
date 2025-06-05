@@ -23,7 +23,7 @@ function App() {
       <Routes>
         {/* 로그인 페이지는 누구나 접근 가능 */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup-success" element={<SignupSuccessPage />} />
+       
 
         {/* 로그인된 사용자만 접근 가능한 메인 레이아웃 */}
         {isLoggedIn && (
