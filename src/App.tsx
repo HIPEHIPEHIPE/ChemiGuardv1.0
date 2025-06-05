@@ -1,4 +1,7 @@
 import React from 'react';
+import { useEffect } from 'react';
+import { supabase } from './lib/supabaseClient';
+import { useUserStore } from './stores/userStore';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 
@@ -17,6 +20,34 @@ import MainLayout from './layouts/MainLayout';
 
 function App() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const setUserInfo = useUserStore((state) => state.setUserInfo);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: worker, error } = await supabase
+          .from('workers')
+          .select('name, organization')
+          .eq('uuid', user.id)
+          .single();
+
+        if (worker && !error) {
+          setUserInfo({
+            id: user.id,
+            email: user.email ?? '',
+            name: worker.name,
+            organization: worker.organization,
+          });
+        }
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   return (
     <Router>
