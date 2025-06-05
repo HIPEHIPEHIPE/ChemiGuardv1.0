@@ -41,7 +41,7 @@ const handleRegister = async () => {
     email: regEmail,
     password: regPassword,
     options: {
-    emailRedirectTo: 'https://your-app.netlify.app/signup-success',
+    emailRedirectTo: 'https://chemicalguard.netlify.app/signup-success'
   },
   });
 

@@ -10,7 +10,7 @@ import DataRefiningPage from './pages/DataRefining/DataRefiningPage';
 import DataProcessingPage from './pages/DataProcessing/DataProcessingPage';
 import QaGenerationPage from './pages/QaGeneration/QaGenerationPage';
 import QaValidationPage from './pages/QaValidation/QaValidationPage';
-import SignupSuccessPage from './pages/SignupSuccess/SignupSuccessPage';
+
 
 
 import MainLayout from './layouts/MainLayout';
