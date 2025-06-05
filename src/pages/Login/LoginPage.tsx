@@ -40,6 +40,9 @@ const handleRegister = async () => {
   const { data, error } = await supabase.auth.signUp({
     email: regEmail,
     password: regPassword,
+    options: {
+    emailRedirectTo: 'https://your-app.netlify.app/signup-success',
+  },
   });
 
   if (error) {
@@ -63,7 +66,7 @@ const handleRegister = async () => {
       return;
     }
 
-    alert('회원가입 이메일을 확인해주세요.');
+    alert('인증메일이 발송되었습니다. 이메일 인증을 완료해주세요.');
     useUserStore.getState().setUserInfo({
       id: user.id,
       email: regEmail,
