@@ -4,7 +4,6 @@ import { supabase } from './lib/supabaseClient';
 import { useUserStore } from './stores/userStore';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-
 import LoginPage from './pages/Login/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import DataAcquisitionPage from './pages/DataAcquisition/DataAcquisitionPage';
@@ -13,9 +12,6 @@ import DataRefiningPage from './pages/DataRefining/DataRefiningPage';
 import DataProcessingPage from './pages/DataProcessing/DataProcessingPage';
 import QaGenerationPage from './pages/QaGeneration/QaGenerationPage';
 import QaValidationPage from './pages/QaValidation/QaValidationPage';
-
-
-
 import MainLayout from './layouts/MainLayout';
 
 function App() {
