@@ -7,7 +7,6 @@ import { useUserStore } from '../../stores/userStore';
 const LoginPage = () => {
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
-  const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
 
   const [regEmail, setRegEmail] = useState('');
@@ -15,6 +14,9 @@ const LoginPage = () => {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regName, setRegName] = useState('');
   const [regOrg, setRegOrg] = useState('');
+
+  const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
 
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
@@ -25,15 +27,16 @@ const LoginPage = () => {
       password: pw,
     });
     if (error) {
-      setError('E-mail 또는 비밀번호가 틀렸습니다.');
+      setLoginError('E-mail 또는 비밀번호가 틀렸습니다.');
     } else {
+      setLoginError('');
       navigate('/dashboard');
     }
   };
 
 const handleRegister = async () => {
   if (regPassword !== regConfirmPassword) {
-    setError('비밀번호가 일치하지 않습니다.');
+    setRegisterError('비밀번호가 일치하지 않습니다.');
     return;
   }
 
@@ -41,12 +44,12 @@ const handleRegister = async () => {
     email: regEmail,
     password: regPassword,
     options: {
-    emailRedirectTo: 'https://chemicalguard.netlify.app/signup-success'
+      emailRedirectTo: 'https://chemicalguard.netlify.app/signup-success',
   },
   });
 
   if (error) {
-    setError('회원가입 실패: ' + error.message);
+    setRegisterError('회원가입 실패: ' + error.message);
     return;
   }
 
@@ -62,7 +65,7 @@ const handleRegister = async () => {
     });
 
     if (insertError) {
-      setError('workers 테이블 저장 실패: ' + insertError.message);
+      setRegisterError('workers 테이블 저장 실패: ' + insertError.message);
       return;
     }
 
@@ -73,6 +76,7 @@ const handleRegister = async () => {
       name: regName,
       organization: regOrg,
     });
+    setRegisterError('');
     setShowModal(false);
   }
 };
@@ -157,7 +161,9 @@ const handleRegister = async () => {
         >
           작업자 등록
         </div>
-        {error && <div style={{ marginTop: 15, color: '#fecaca' }}>{error}</div>}
+        {loginError && (
+          <div style={{ marginTop: 15, color: '#fecaca' }}>{loginError}</div>
+        )}
       </div>
 
       {showModal && (
@@ -253,6 +259,11 @@ const handleRegister = async () => {
               </button>
               
             </div>
+            {registerError && (
+              <div style={{ color: '#dc2626', marginTop: 10, fontSize: 14 }}>
+                {registerError}
+              </div>
+            )}
           </div>
         </div>
       )}
