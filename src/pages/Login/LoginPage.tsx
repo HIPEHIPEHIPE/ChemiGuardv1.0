@@ -1,22 +1,78 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../lib/supabaseClient';
+import { useUserStore } from '../../stores/userStore';
 
 const LoginPage = () => {
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
   const [error, setError] = useState('');
+  const [showModal, setShowModal] = useState(false);
+
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regName, setRegName] = useState('');
+  const [regOrg, setRegOrg] = useState('');
+
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    const success = login(id, pw);
-    if (success) {
-      navigate('/dashboard');
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: id,
+      password: pw,
+    });
+    if (error) {
+      setError('E-mail 또는 비밀번호가 틀렸습니다.');
     } else {
-      setError('ID 또는 비밀번호가 틀렸습니다.');
+      navigate('/dashboard');
     }
   };
+
+const handleRegister = async () => {
+  if (regPassword !== regConfirmPassword) {
+    setError('비밀번호가 일치하지 않습니다.');
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email: regEmail,
+    password: regPassword,
+  });
+
+  if (error) {
+    setError('회원가입 실패: ' + error.message);
+    return;
+  }
+
+  // 유저 생성 성공 시 workers 테이블에 추가
+  const user = data.user;
+
+  if (user) {
+    const { error: insertError } = await supabase.from('workers').insert({
+      id: user.id,
+      email: regEmail,
+      name: regName,
+      organization: regOrg,
+    });
+
+    if (insertError) {
+      setError('workers 테이블 저장 실패: ' + insertError.message);
+      return;
+    }
+
+    alert('회원가입 이메일을 확인해주세요.');
+    useUserStore.getState().setUserInfo({
+      id: user.id,
+      email: regEmail,
+      name: regName,
+      organization: regOrg,
+    });
+    setShowModal(false);
+  }
+};
 
   return (
     <div
@@ -40,7 +96,7 @@ const LoginPage = () => {
       >
         <h2 style={{ textAlign: 'center', marginBottom: 30 }}>🧪 ChemiGuard 로그인</h2>
         <input
-          placeholder="ID"
+          placeholder="email"
           value={id}
           onChange={(e) => setId(e.target.value)}
           style={{
@@ -66,40 +122,137 @@ const LoginPage = () => {
             outline: 'none',
           }}
         />
-      <button
-        onClick={handleLogin}
-        style={{
+        <button
+          onClick={handleLogin}
+          style={{
             display: 'block',
             margin: '10px auto',
             padding: '12px 24px',
             backgroundColor: '#10b981',
             color: 'white',
             border: 'none',
-            width:'80%',
+            width: '80%',
             borderRadius: 6,
             fontWeight: 'bold',
             fontSize: 16,
             cursor: 'pointer',
-        }}
+          }}
         >
-        로그인
+          로그인
         </button>
 
         <div
-        onClick={() => alert('작업자 등록은 추후 구현됩니다.')}
-        style={{
+          onClick={() => setShowModal(true)}
+          style={{
             textAlign: 'center',
             marginTop: 12,
             color: 'white',
             fontSize: 15,
             textDecoration: 'underline',
             cursor: 'pointer',
-        }}
+          }}
         >
-        작업자 등록
+          작업자 등록
         </div>
         {error && <div style={{ marginTop: 15, color: '#fecaca' }}>{error}</div>}
       </div>
+
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: 30,
+              borderRadius: 10,
+              width: 400,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <h3 style={{ marginBottom: 20 }}>작업자 등록</h3>
+            <input
+              placeholder="이메일"
+              value={regEmail}
+              onChange={(e) => setRegEmail(e.target.value)}
+              style={{ marginBottom: 10, width: '100%', padding: 8 }}
+            />
+            <input
+              type="password"
+              placeholder="비밀번호"
+              value={regPassword}
+              onChange={(e) => setRegPassword(e.target.value)}
+              style={{ marginBottom: 10, width: '100%', padding: 8 }}
+            />
+            <input
+              type="password"
+              placeholder="비밀번호 확인"
+              value={regConfirmPassword}
+              onChange={(e) => setRegConfirmPassword(e.target.value)}
+              style={{ marginBottom: 10, width: '100%', padding: 8 }}
+            />
+            <input
+              placeholder="이름"
+              value={regName}
+              onChange={(e) => setRegName(e.target.value)}
+              style={{ marginBottom: 10, width: '100%', padding: 8 }}
+            />
+            <input
+              placeholder="소속기관"
+              value={regOrg}
+              onChange={(e) => setRegOrg(e.target.value)}
+              style={{ marginBottom: 20, width: '100%', padding: 8 }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              <button
+                onClick={handleRegister}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  flex: 1,
+                  marginRight: 10,
+                }}
+              >
+                등록
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  flex: 1,
+                }}
+              >
+                닫기
+              </button>
+              
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
