@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useUserStore } from '../../stores/userStore';
 
 const Header = () => {
   const location = useLocation();
-  const { userInfo } = useUserStore();
-  const username = userInfo?.name || '사용자';
+  const userInfo = useUserStore((state) => state.userInfo);
+  const username = userInfo && userInfo.name ? userInfo.name : '로딩 중...';
+
+  useEffect(() => {
+    console.log('[Header] userInfo:', userInfo);
+  }, [userInfo]);
 
   // 경로에 따라 페이지명 설정
   const getPageTitle = () => {

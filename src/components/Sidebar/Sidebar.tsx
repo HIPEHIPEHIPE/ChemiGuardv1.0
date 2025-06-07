@@ -1,7 +1,9 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useUserStore } from '../../stores/userStore';
 
 const Sidebar = () => {
+  const userInfo = useUserStore((state) => state.userInfo);
   const linkStyle = {
     display: 'block',
     padding: '8px 12px',
@@ -22,21 +24,23 @@ const Sidebar = () => {
       color: 'white',
       padding: '20px 16px',
       boxSizing: 'border-box',
-      height: '130vh'
+      height: '100%'
     }}>
       <h3 style={{ marginBottom: 24 }}>🧪 ChemiGuard v1.0</h3>
       <ul style={{ listStyle: 'none', padding: 0 }}>
-        <li>
-          <NavLink
-            to="/dashboard"
-            style={({ isActive }) => ({
-              ...linkStyle,
-              ...(isActive ? activeStyle : {})
-            })}
-          >
-            관리자 대시보드
-          </NavLink>
-        </li>
+        {userInfo?.role === 'admin' && (
+          <li>
+            <NavLink
+              to="/dashboard"
+              style={({ isActive }) => ({
+                ...linkStyle,
+                ...(isActive ? activeStyle : {})
+              })}
+            >
+              관리자 대시보드
+            </NavLink>
+          </li>
+        )}
         <li>
           <NavLink
             to="/data-acquisition"

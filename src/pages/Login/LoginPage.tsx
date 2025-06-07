@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabaseClient';
 import { useUserStore } from '../../stores/userStore';
 
@@ -18,7 +17,6 @@ const LoginPage = () => {
   const [loginError, setLoginError] = useState('');
   const [registerError, setRegisterError] = useState('');
 
-  const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
   const isPasswordValid = (pw: string) => {
@@ -38,11 +36,10 @@ const LoginPage = () => {
       setLoginError('E-mail 또는 비밀번호가 틀렸습니다.');
     } else {
       setLoginError('');
-      login(); // 로그인 상태만 true로 설정됨
       if (data.user) {
         const { data: userData, error: userError } = await supabase
           .from('workers')
-          .select('name, organization')
+           .select('name, organization, role')
           .eq('id', data.user.id)
           .single();
 
@@ -56,18 +53,18 @@ const LoginPage = () => {
           email: data.user.email ?? '',
           name: userData.name,
           organization: userData.organization,
+          role: userData.role, // <--- 가져온 role 추가
         });
       }
       navigate('/dashboard');
     }
   };
 
-  const handleRegister = async () => {
+    const handleRegister = async () => {
     if (regPassword !== regConfirmPassword) {
       setRegisterError('비밀번호가 일치하지 않습니다.');
       return;
     }
-
     if (!isPasswordValid(regPassword)) {
       setRegisterError('비밀번호는 6자 이상이며, 영문 대/소문자 및 숫자를 포함해야 합니다.');
       return;
@@ -86,15 +83,16 @@ const LoginPage = () => {
       return;
     }
 
-    // 유저 생성 성공 시 workers 테이블에 추가
     const user = data.user;
-
     if (user) {
+      // [참고] 회원가입 시 workers 테이블에 insert할 때 기본 role을 지정해줘야 합니다.
+      // 이 부분은 DB의 DEFAULT 값('user')으로 처리되므로 코드 수정은 필요 없습니다.
       const { error: insertError } = await supabase.from('workers').insert({
-        id: user.id,
+        uuid: user.id, // Supabase auth.users.id는 uuid 타입입니다. 컬럼명을 확인하세요.
         email: regEmail,
         name: regName,
         organization: regOrg,
+        // role은 DB에서 자동으로 'user'로 설정됩니다.
       });
 
       if (insertError) {
@@ -103,11 +101,14 @@ const LoginPage = () => {
       }
 
       alert('인증메일이 발송되었습니다. 이메일 인증을 완료해주세요.');
+
+      // [수정 3] 회원가입 후 setUserInfo를 호출할 때 기본 role인 'user'를 명시적으로 추가합니다.
       useUserStore.getState().setUserInfo({
         id: user.id,
         email: regEmail,
         name: regName,
         organization: regOrg,
+        role: 'user', // <--- 기본 역할 'user' 추가
       });
       setRegisterError('');
       setShowModal(false);
