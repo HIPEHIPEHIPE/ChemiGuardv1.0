@@ -77,20 +77,38 @@ const Header = () => {
         </button>
 
         {/* 사용자 버튼 */}
-        <button style={{
-          backgroundColor: '#f3f4f6',
-          border: '1px solid #d1d5db',
-          borderRadius: 6,
-          padding: '6px 12px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          cursor: 'pointer',
-          fontSize: 14
-        }}>
-          <span role="img" aria-label="user">👤</span>
-          <span>{username}</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            backgroundColor: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            borderRadius: 6,
+            padding: '6px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 14
+          }}>
+            <span role="img" aria-label="user">👤</span>
+            <span>{username}</span>
+          </div>
+          <button
+            style={{
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: 14
+            }}
+            onClick={() => {
+              localStorage.clear();
+              window.location.href = '/login';
+            }}
+          >
+            로그아웃
+          </button>
+        </div>
       </div>
     </div>
   );

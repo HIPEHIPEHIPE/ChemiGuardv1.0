@@ -85,10 +85,8 @@ const LoginPage = () => {
 
     const user = data.user;
     if (user) {
-      // [참고] 회원가입 시 workers 테이블에 insert할 때 기본 role을 지정해줘야 합니다.
-      // 이 부분은 DB의 DEFAULT 값('user')으로 처리되므로 코드 수정은 필요 없습니다.
       const { error: insertError } = await supabase.from('workers').insert({
-        uuid: user.id, // Supabase auth.users.id는 uuid 타입입니다. 컬럼명을 확인하세요.
+        id: user.id,
         email: regEmail,
         name: regName,
         organization: regOrg,
@@ -100,16 +98,7 @@ const LoginPage = () => {
         return;
       }
 
-      alert('인증메일이 발송되었습니다. 이메일 인증을 완료해주세요.');
-
-      // [수정 3] 회원가입 후 setUserInfo를 호출할 때 기본 role인 'user'를 명시적으로 추가합니다.
-      useUserStore.getState().setUserInfo({
-        id: user.id,
-        email: regEmail,
-        name: regName,
-        organization: regOrg,
-        role: 'user', // <--- 기본 역할 'user' 추가
-      });
+      alert('인증메일이 발송되었습니다. 이메일 인증 후 로그인해주세요.');
       setRegisterError('');
       setShowModal(false);
     }
@@ -135,7 +124,7 @@ const LoginPage = () => {
           color: 'white',
         }}
       >
-        <h2 style={{ textAlign: 'center', marginBottom: 30 }}>🧪 ChemiGuard 로그인</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: 30 }}>🧪 ChemiGuard v1.0 로그인</h2>
         <input
           type="email"
           placeholder="email"
