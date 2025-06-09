@@ -1,0 +1,11 @@
+{
+  // 이 설정을 통해 VS Code가 Deno를 활성화하고,
+  // Deno가 supabase/functions 폴더의 파일을 관리하도록 합니다.
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": true,
+  // 특정 폴더에서만 Deno를 활성화하고 싶을 때 사용합니다.
+  "deno.enablePaths": [
+    "supabase/functions"
+  ]
+}

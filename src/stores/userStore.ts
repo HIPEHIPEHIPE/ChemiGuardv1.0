@@ -6,7 +6,7 @@ type UserInfo = {
   email: string;
   name: string;
   organization: string;
-  role: 'admin' | 'user'; 
+  role: 'admin' | 'user' | 'data' | 'collect' | 'refine' | 'check';
 };
 
 interface UserStore {

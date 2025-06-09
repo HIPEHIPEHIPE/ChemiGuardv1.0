@@ -13,6 +13,7 @@ const LoginPage = () => {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regName, setRegName] = useState('');
   const [regOrg, setRegOrg] = useState('');
+  const [regRole, setRegRole] = useState('user');
 
   const [loginError, setLoginError] = useState('');
   const [registerError, setRegisterError] = useState('');
@@ -90,7 +91,7 @@ const LoginPage = () => {
         email: regEmail,
         name: regName,
         organization: regOrg,
-        // role은 DB에서 자동으로 'user'로 설정됩니다.
+        role: regRole,
       });
 
       if (insertError) {
@@ -251,6 +252,19 @@ const LoginPage = () => {
               onChange={(e) => setRegOrg(e.target.value)}
               style={{ marginBottom: 20, width: '100%', padding: 8 }}
             />
+            <label style={{ alignSelf: 'flex-start', marginBottom: 6, fontSize: 14, fontWeight: 'bold' }}>
+              역할 선택
+            </label>
+            <select
+              value={regRole}
+              onChange={(e) => setRegRole(e.target.value)}
+              style={{ marginBottom: 20, width: '100%', padding: 8 }}
+            >
+              <option value="user">일반</option>
+              <option value="collect">수집 담당자</option>
+              <option value="refine">정제/가공 담당자</option>
+              <option value="check">검수 담당자</option>
+            </select>
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
               <button
                 onClick={handleRegister}
