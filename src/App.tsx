@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { supabase } from './lib/supabaseClient';
 import { useUserStore } from './stores/userStore';
@@ -65,7 +64,7 @@ function App() {
   }, [setUserInfo]);
 
   return (
-<Router>
+    <Router>
       <Routes>
         {/* 로그인 페이지 */}
         <Route 
@@ -97,7 +96,6 @@ function App() {
           <Route path="data-processing" element={<DataProcessingPage />} />
           <Route path="qa-generation" element={<QaGenerationPage />} />
           <Route path="qa-validation" element={<QaValidationPage />} />
-          {/* 추후 다른 페이지들도 여기에 추가 */}
         </Route>
 
         <Route 

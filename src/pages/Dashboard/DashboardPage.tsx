@@ -3,9 +3,9 @@ import { supabase } from '../../lib/supabaseClient';
 
 // --- 타입 정의 ---
 interface StatCardData {
-  totalCount: number;
-  completedCount: number;
-  validationCount: number;
+  totalProducts: number;
+  approvedCount: number;
+  reviewedCount: number;
   qualityPassRate: number;
 }
 
@@ -13,19 +13,6 @@ interface ProgressItemData {
   label: string;
   percent: number;
   color: string;
-}
-
-// DB 함수 반환 타입
-interface StatusProgress {
-  status: string;
-  count: number;
-  percent: number;
-}
-
-interface CategoryDistribution {
-  product_category: string;
-  count: number;
-  percent: number;
 }
 
 interface WorkerStat {
@@ -40,9 +27,9 @@ interface WorkerStat {
 const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<StatCardData>({
-    totalCount: 0,
-    completedCount: 0,
-    validationCount: 0,
+    totalProducts: 0,
+    approvedCount: 0,
+    reviewedCount: 0,
     qualityPassRate: 0,
   });
   const [progressData, setProgressData] = useState<ProgressItemData[]>([]);
@@ -50,84 +37,94 @@ const DashboardPage = () => {
   const [workerStats, setWorkerStats] = useState<WorkerStat[]>([]);
 
   const ALL_STATUSES = [
-    { key: 'pending', label: '수집 대기', color: '#f59e0b' },
-    { key: 'refining', label: '정제 중', color: '#eab308' },
-    { key: 'processing', label: '가공 중', color: '#3b82f6' },
-    { key: 'validation', label: '검수 대기', color: '#8b5cf6' },
-    { key: 'completed', label: '완료', color: '#10b981' },
+    { key: 'collected', label: '수집완료', color: '#10b981' },
+    { key: 'annotated', label: '주석완료', color: '#3b82f6' },
+    { key: 'reviewed', label: '검수완료', color: '#8b5cf6' },
+    { key: 'approved', label: '승인완료', color: '#059669' },
     { key: 'rejected', label: '반려', color: '#ef4444' },
+    { key: 'draft', label: '초안', color: '#f59e0b' },
   ];
 
-  const ALL_CATEGORIES = ['세정제', '살균제', '방향제', '표백제', '기타'];
+  const PRODUCT_CATEGORIES = [
+    '세정제품', '세탁제품', '코팅제품', '접착·접합제품', '방향·탈취제품',
+    '염색·도색제품', '자동차 전용 제품', '인쇄 및 문서관련 제품', '미용제품',
+    '여가용품 관리제품', '살균제품', '구제제품', '보존·보존처리제품', '기타'
+  ];
 
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // 1. 기본 통계 데이터 가져오기
-      const { data: chemicalsData, error: chemicalsError } = await supabase
-        .from('chemicals')
-        .select('id, chemical_name_ko, cas_no, created_at');
-      
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('id, product_name_alias, product_category, status, created_at');
-      
-      const { data: captionsData, error: captionsError } = await supabase
-        .from('captions')
-        .select('id, product_id, caption_type, created_at');
-      
-      const { data: qaData, error: qaError } = await supabase
-        .from('qa_pairs')
-        .select('id, product_id, user_type, created_at');
 
-      if (chemicalsError) throw chemicalsError;
+      // 1. 필요한 모든 데이터를 병렬로 가져오기 (성능 향상)
+      const [
+        { data: productsData, error: productsError },
+        { data: trainingData, error: trainingError },
+        { data: categoriesDbData, error: categoriesError }, // DB에서 카테고리 목록 직접 가져오기
+        { data: workersData, error: workersError },
+        { data: assignmentsData, error: assignmentsError }
+      ] = await Promise.all([
+        supabase.from('products').select('id, product_category, status'),
+        supabase.from('ai_training_data').select('review_status'),
+        supabase.from('product_categories').select('category_name').order('id'), // DB에서 카테고리 목록 조회
+        supabase.from('workers').select('id, name, role, organization'), 
+        supabase.from('work_assignments').select('assigned_to, target_count, completed_count')
+      ]);
+
+      // 2. 에러 핸들링
       if (productsError) throw productsError;
-      if (captionsError) throw captionsError;
-      if (qaError) throw qaError;
-
-      // 2. 통계 계산
-      const totalChemicals = chemicalsData?.length || 0;
+      if (trainingError) throw trainingError;
+      if (categoriesError) throw categoriesError;
+      if (workersError) throw workersError;
+      if (assignmentsError) throw assignmentsError;
+      
       const totalProducts = productsData?.length || 0;
-      const totalCaptions = captionsData?.length || 0;
-      const totalQA = qaData?.length || 0;
+
+      // 3. 통계 카드 데이터 계산 (approved, reviewed는 trainingData 기준)
+      const approvedCount = trainingData?.filter(d => d.review_status === 'approved').length || 0;
+      const reviewedCount = trainingData?.filter(d => d.review_status === 'reviewed').length || 0;
       
-      // 상태별 진행률 계산
-      const statusCounts: {[key: string]: number} = {};
-      productsData?.forEach(product => {
-        statusCounts[product.status] = (statusCounts[product.status] || 0) + 1;
+      setStats({
+        totalProducts: totalProducts,
+        approvedCount: approvedCount,
+        reviewedCount: reviewedCount,
+        qualityPassRate: totalProducts > 0 ? Math.round((approvedCount / totalProducts) * 100) : 0,
       });
-      
+
+      // 4. 데이터 처리 단계별 현황 계산
+      const statusCounts: {[key: string]: number} = {};
+      ALL_STATUSES.forEach(status => { statusCounts[status.key] = 0; });
+
+      productsData?.forEach(product => {
+        if (product.status && product.status in statusCounts) {
+          statusCounts[product.status]++;
+        }
+      });
+      statusCounts['approved'] = approvedCount; // 정확한 값으로 덮어쓰기
+      statusCounts['reviewed'] = reviewedCount; // 정확한 값으로 덮어쓰기
+
+      // 데이터 유무와 상관없이 항상 모든 상태 항목 생성
       const formattedProgress = ALL_STATUSES.map(statusInfo => {
         const count = statusCounts[statusInfo.key] || 0;
         const percent = totalProducts > 0 ? Math.round((count / totalProducts) * 100) : 0;
-        return { 
-          label: `${statusInfo.label}: ${count}건`, 
-          percent: percent, 
-          color: statusInfo.color 
+        return {
+          label: `${statusInfo.label}: ${count}건`,
+          percent: percent,
+          color: statusInfo.color
         };
       });
-      
-      // 카테고리별 분포 계산
-      const categoryCounts: {[key: string]: number} = {};
-      
-      // 모든 카테고리를 0으로 초기화
-      ALL_CATEGORIES.forEach(category => {
-        categoryCounts[category] = 0;
-      });
-      
-      // 실제 데이터로 카운트 업데이트
+      setProgressData(formattedProgress);
+
+      // 5. 제품 카테고리별 분포 계산
+      const categoryCounts: { [key: string]: number } = {};
       productsData?.forEach(product => {
         const category = product.product_category || '기타';
-        if (ALL_CATEGORIES.includes(category)) {
-          categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-        } else {
-          categoryCounts['기타'] = (categoryCounts['기타'] || 0) + 1;
-        }
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
       });
-      
-      const categoryColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
-      const formattedCategories = ALL_CATEGORIES.map((categoryName, index) => {
+
+      // DB에서 가져온 카테고리 목록을 기준으로 항상 모든 항목 생성
+      const dbCategoryNames = categoriesDbData?.map(c => c.category_name) || [];
+      const categoryColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#059669', '#d97706', '#7c3aed'];
+      const formattedCategories = dbCategoryNames.map((categoryName, index) => {
         const count = categoryCounts[categoryName] || 0;
         const percent = totalProducts > 0 ? Math.round((count / totalProducts) * 100) : 0;
         return {
@@ -135,59 +132,38 @@ const DashboardPage = () => {
           percent: percent,
           color: categoryColors[index % categoryColors.length]
         };
-      }); // 모든 카테고리 항상 표시
+      }).sort((a,b) => b.percent - a.percent).slice(0, 8); // 점유율 순으로 8개만 표시
       
-      // 디버깅용 로그
-      console.log('카테고리 데이터:', formattedCategories);
-      console.log('전체 제품 수:', totalProducts);
-      console.log('카테고리 카운트:', categoryCounts);
-      
-      // 상태 업데이트
-      setStats({
-        totalCount: totalProducts,  // 제품 데이터만 집계
-        completedCount: statusCounts['completed'] || 0,
-        validationCount: statusCounts['validation'] || 0,
-        qualityPassRate: totalProducts > 0 ? Math.round(((statusCounts['completed'] || 0) / totalProducts) * 100) : 0,
-      });
-      
-      setProgressData(formattedProgress);
       setCategoryData(formattedCategories);
-      
-      // 작업자 데이터 가져오기
-      const { data: workersData, error: workersError } = await supabase
-        .from('workers')
-        .select('id, email, name, organization, created_at, role');
-      
-      if (workersError) {
-        console.error('Workers 데이터 로딩 에러:', workersError);
+
+      // 6. 작업자별 현황 계산
+      if (!workersData || !assignmentsData) {
         setWorkerStats([]);
       } else {
-        // 모든 작업자의 담당건수와 완료건수를 0으로 설정
-        // 나중에 관리자가 작업 분배 후 업데이트 예정
-        const formattedWorkerStats = workersData?.map((worker) => {
+        const formattedWorkerStats = workersData.map(worker => {
+          const assignment = assignmentsData.find(a => a.assigned_to === worker.id);
           return {
             worker_id: worker.id?.toString() || 'unknown',
             worker_name: worker.name || '알 수 없음',
             worker_role: worker.role || worker.organization || '미지정',
-            total_assigned: 0,  // 관리자 분배 대기
-            total_completed: 0, // 아직 완료된 작업 없음
-            rejection_rate: 0   // 아직 반려 내역 없음
+            total_assigned: assignment?.target_count || 0,
+            total_completed: assignment?.completed_count || 0,
+            rejection_rate: 0
           };
-        }) || [];
-        
-        console.log('Workers 데이터:', workersData);
-        console.log('작업자 통계 (분배 대기):', formattedWorkerStats);
-        
+        }).filter(w => w.total_assigned > 0); // 할당된 작업자만 표시
         setWorkerStats(formattedWorkerStats);
       }
-      
+
     } catch (error) {
       console.error('대시보드 데이터 로딩 에러:', error);
+      // 에러 발생 시에도 기본 항목을 표시하도록 설정
+      setProgressData(ALL_STATUSES.map(s => ({label: `${s.label}: 0건`, percent: 0, color: s.color})));
+      setCategoryData([]); // 카테고리는 DB 조회 실패 시 비워둠
+      setWorkerStats([]);
     } finally {
       setLoading(false);
     }
-  }, []);
-
+}, []);
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
@@ -199,11 +175,21 @@ const DashboardPage = () => {
   return (
     <main style={{ padding: '24px', backgroundColor: '#f9fafb' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>관리자 대시보드</h2>
-        <button onClick={fetchDashboardData} style={{ padding: '8px 16px', cursor: 'pointer' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>ChemiGuard 관리자 대시보드</h2>
+        <button onClick={fetchDashboardData} style={{
+          padding: '10px 20px',
+          cursor: 'pointer',
+          backgroundColor: '#4f46e5',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }}>
           🔄 새로고침
         </button>
       </div>
+
       <div
         style={{
           display: 'grid',
@@ -212,10 +198,10 @@ const DashboardPage = () => {
           marginBottom: '30px',
         }}
       >
-        <StatCard color="#3b82f6" number={`${stats.totalCount}`} label="총 데이터 등록" />
-        <StatCard color="#10b981" number={`${stats.completedCount}`} label="완료된 등록" />
-        <StatCard color="#f59e0b" number={`${stats.validationCount}`} label="검수 대기 등록" />
-        <StatCard color="#8b5cf6" number={`${stats.qualityPassRate}%`} label="품질 검수 통과율" />
+        <StatCard color="#3b82f6" number={`${stats.totalProducts}`} label="총 제품 수" />
+        <StatCard color="#10b981" number={`${stats.approvedCount}`} label="승인 완료" />
+        <StatCard color="#f59e0b" number={`${stats.reviewedCount}`} label="검수 완료" />
+        <StatCard color="#8b5cf6" number={`${stats.qualityPassRate}%`} label="품질 승인율" />
       </div>
 
       <div
@@ -223,10 +209,11 @@ const DashboardPage = () => {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '20px',
+          marginBottom: '30px'
         }}
       >
-        <ProgressGroup title="단계별 진행 현황" items={progressData} />
-        <ProgressGroup title="카테고리별 데이터 분포" items={categoryData} />
+        <ProgressGroup title="데이터 처리 단계별 현황" items={progressData} />
+        <ProgressGroup title="제품 카테고리별 분포" items={categoryData} />
       </div>
 
       <WorkerTable workerStats={workerStats} />
@@ -235,9 +222,15 @@ const DashboardPage = () => {
 };
 
 const StatCard = ({ color, number, label }: { color: string; number: string; label: string }) => (
-  <div style={{ backgroundColor: color, padding: 20, borderRadius: 10, color: '#fff' }}>
-    <div style={{ fontSize: 24, fontWeight: 700 }}>{number}</div>
-    <div style={{ marginTop: 8 }}>{label}</div>
+  <div style={{
+    backgroundColor: color,
+    padding: 24,
+    borderRadius: 12,
+    color: '#fff',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+  }}>
+    <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{number}</div>
+    <div style={{ fontSize: 16, opacity: 0.9 }}>{label}</div>
   </div>
 );
 
@@ -248,27 +241,40 @@ const ProgressGroup = ({
   title: string;
   items: { label: string; percent: number; color: string }[];
 }) => (
-  <div style={{ background: '#fff', borderRadius: 8, padding: 20 }}>
-    <h3 style={{ marginBottom: 20 }}>{title}</h3>
+  <div style={{
+    background: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+  }}>
+    <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: '600', color: '#1f2937' }}>{title}</h3>
+    
+    {/* 조건문을 제거하고 바로 map을 실행 */}
     {items.map((item, i) => (
       <ProgressItem key={i} {...item} />
     ))}
+
+    {/* 예외 상황(DB 연결 실패 등)에서 items가 비어있을 때를 위한 메시지 */}
+    {items.length === 0 && (
+        <p style={{ color: '#6b7280', fontSize: 14 }}>표시할 항목이 없습니다.</p>
+    )}
   </div>
 );
 
 const ProgressItem = ({ label, percent, color }: { label: string; percent: number; color: string }) => (
-  <div style={{ marginBottom: 18 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 6 }}>
+  <div style={{ marginBottom: 20 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8, color: '#374151' }}>
       <span>{label}</span>
-      <span>{percent}%</span>
+      <span style={{ fontWeight: '600' }}>{percent}%</span>
     </div>
-    <div style={{ background: '#e5e7eb', height: 10, borderRadius: 4, overflow: 'hidden' }}>
+    <div style={{ background: '#e5e7eb', height: 8, borderRadius: 4, overflow: 'hidden' }}>
       <div
         style={{
           width: `${percent}%`,
           height: '100%',
           backgroundColor: color,
           borderRadius: 4,
+          transition: 'width 0.3s ease'
         }}
       />
     </div>
@@ -277,72 +283,111 @@ const ProgressItem = ({ label, percent, color }: { label: string; percent: numbe
 
 const WorkerTable = ({ workerStats }: { workerStats: WorkerStat[] }) => {
   const getQuality = (rejectionRate: number) => {
-      if (rejectionRate <= 10) return { text: '좋음', color: '#10b981' }; // 0% ~ 10%
-      if (rejectionRate <= 30) return { text: '보통', color: '#f59e0b' }; // 11% ~ 30%
-      if (rejectionRate <= 50) return { text: '나쁨', color: '#ef4444' }; // 31% ~ 50%
-      return { text: '개선 필요', color: '#dc2626' }; // 51% 초과 (더 진한 빨강)
+    if (rejectionRate <= 10) return { text: '우수', color: '#10b981' };
+    if (rejectionRate <= 30) return { text: '보통', color: '#f59e0b' };
+    if (rejectionRate <= 50) return { text: '개선필요', color: '#ef4444' };
+    return { text: '긴급조치', color: '#dc2626' };
   };
 
-  return (
-    <div style={{ marginTop: 20 }}>
-      <div
-        style={{
-          padding: 20,
-          borderBottom: '1px solid #e5e7eb',
-          position: 'relative',
-        }}
-      >
-        <h3 style={{ marginBottom: 10 }}>작업자별 현황</h3>
+  if (workerStats.length === 0) {
+    return (
+      <div style={{
+        background: '#fff',
+        borderRadius: 12,
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        padding: 24,
+        color: '#6b7280',
+        fontSize: 14,
+        textAlign: 'center'
+      }}>
+        현재 등록된 작업자 데이터가 없습니다.
+      </div>
+    );
+  }
 
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: 12,
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+      overflow: 'hidden'
+    }}>
+      <div style={{ padding: '24px 24px 16px 24px', borderBottom: '1px solid #e5e7eb' }}>
+        <h3 style={{ margin: 0, fontSize: 18, fontWeight: '600', color: '#1f2937' }}>작업자별 현황</h3>
+        <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: 14 }}>현재 등록된 작업자들의 작업 진행 상황</p>
       </div>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
-        <thead>
-          <tr>
-            {['작업자', '역할', '담당 건수', '완료 건수', '반려율', '품질', '상태'].map(head => (
-              <th
-                key={head}
-                style={{
-                  textAlign: 'left',
-                  padding: '12px 8px',
-                  borderBottom: '1px solid #e5e7eb',
-                  backgroundColor: '#f9fafb',
-                  fontWeight: 600,
-                  fontSize: 14,
-                  color: '#374151',
-                }}
-              >
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {workerStats.map(worker => {
-            const quality = getQuality(worker.rejection_rate);
-            return (
-              <tr key={worker.worker_id}>
-                <td style={tdStyle}>{worker.worker_name}</td>
-                <td style={{...tdStyle, color: '#6b7280', fontSize: '13px'}}>{worker.worker_role}</td>
-                <td style={tdStyle}>{`${worker.total_assigned}건`}</td>
-                <td style={tdStyle}>{`${worker.total_completed}건`}</td>
-                <td style={tdStyle}>{`${worker.rejection_rate}%`}</td>
-                <td style={{ ...tdStyle, color: quality.color, fontWeight: 'bold' }}>{quality.text}</td>
-                <td style={{ ...tdStyle, color: '#3b82f6' }}>정상</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f9fafb' }}>
+              {['작업자', '역할/소속', '할당 건수', '완료 건수', '진행률', '품질 등급', '상태'].map(head => (
+                <th
+                  key={head}
+                  style={{
+                    textAlign: 'left',
+                    padding: '16px',
+                    borderBottom: '1px solid #e5e7eb',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    color: '#374151',
+                  }}
+                >
+                  {head}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {workerStats.map(worker => {
+              const quality = getQuality(worker.rejection_rate);
+              const completionRate = worker.total_assigned > 0 ? Math.round((worker.total_completed / worker.total_assigned) * 100) : 0;
+
+              return (
+                <tr key={worker.worker_id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <td style={tdStyle}>
+                    <div style={{ fontWeight: '600', color: '#1f2937' }}>{worker.worker_name}</div>
+                  </td>
+                  <td style={{ ...tdStyle, color: '#6b7280', fontSize: '13px' }}>{worker.worker_role}</td>
+                  <td style={tdStyle}>
+                    <span style={{ fontWeight: '500' }}>{worker.total_assigned}건</span>
+                  </td>
+                  <td style={tdStyle}>
+                    <span style={{ fontWeight: '500' }}>{worker.total_completed}건</span>
+                  </td>
+                  <td style={tdStyle}>
+                    <span style={{ fontWeight: '500', color: completionRate >= 80 ? '#10b981' : completionRate >= 50 ? '#f59e0b' : '#ef4444' }}>
+                      {completionRate}%
+                    </span>
+                  </td>
+                  <td style={{ ...tdStyle, color: quality.color, fontWeight: '600' }}>{quality.text}</td>
+                  <td style={{ ...tdStyle }}>
+                    <span style={{
+                      backgroundColor: '#dcfce7',
+                      color: '#16a34a',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}>
+                      활성
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
 
 const tdStyle: React.CSSProperties = {
-  padding: '12px 8px',
+  padding: '16px',
   fontSize: 14,
   color: '#374151',
-  borderBottom: '1px solid #e5e7eb',
+  borderBottom: '1px solid #f3f4f6',
 };
 
 export default DashboardPage;
