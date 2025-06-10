@@ -4,7 +4,7 @@ import UploadDetailModal from './UploadDetailModal';
 
 // 업로드 이력 타입 정의
 export interface UploadHistory {
-  id: number;
+  id: string | number;  // string 또는 number 허용
   filename: string;
   file_size: string;
   upload_date: string;
@@ -28,9 +28,16 @@ const UploadHistoryTable: React.FC<UploadHistoryTableProps> = ({ uploads, loadin
 
   const getDataTypeDisplay = (dataType: string | undefined) => {
     switch(dataType) {
-      case 'products': return { text: '제품', color: '#10b981' };
-      case 'chemicals': return { text: '화학물질', color: '#3b82f6' };
-      default: return { text: '제품', color: '#10b981' };
+      case 'products':
+      case '제품': 
+        return { text: '제품', color: '#10b981' };
+      case 'chemicals':
+      case '화학물질': 
+        return { text: '화학물질', color: '#3b82f6' };
+      case 'msds':
+        return { text: 'MSDS', color: '#8b5cf6' };
+      default: 
+        return { text: dataType || '미지정', color: '#6b7280' };
     }
   };
 

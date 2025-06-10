@@ -441,3 +441,385 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- =====================================================
+-- ChemiGuard v1.1 개선된 데이터베이스 스키마
+-- 독립적인 chemicals 테이블 추가
+-- =====================================================
+
+-- 새로 추가: 화학물질 마스터 테이블 (독립적)
+CREATE TABLE IF NOT EXISTS chemicals (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) UNIQUE NOT NULL,
+  chemical_name_ko VARCHAR(255) NOT NULL,
+  chemical_name_en VARCHAR(255),
+  cas_no VARCHAR(50) UNIQUE,
+  chemical_formula VARCHAR(255),
+  molecular_weight DECIMAL(10, 4),
+  iupac_name TEXT,
+  smiles TEXT,
+  physical_state VARCHAR(50), -- 물리적 상태 (고체/액체/기체)
+  melting_point VARCHAR(100),
+  boiling_point VARCHAR(100),
+  density VARCHAR(100),
+  solubility TEXT,
+  ph_value VARCHAR(50),
+  vapor_pressure VARCHAR(100),
+  flash_point VARCHAR(100),
+  autoignition_temp VARCHAR(100),
+  -- 데이터 수집 정보
+  collected_date DATE,
+  collected_source VARCHAR(255),
+  collected_method VARCHAR(50),
+  source_reference VARCHAR(255),
+  data_quality_score DECIMAL(3,2), -- 데이터 품질 점수 (0.00-1.00)
+  verification_status VARCHAR(20) DEFAULT 'pending', -- verified, pending, rejected
+  -- 메타정보
+  status VARCHAR(20) DEFAULT 'collected',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_by UUID,
+  updated_by UUID,
+  -- 원본 데이터 보존
+  raw_data JSONB
+);
+
+CREATE INDEX idx_chemicals_cas_no ON chemicals(cas_no);
+CREATE INDEX idx_chemicals_status ON chemicals(status);
+CREATE INDEX idx_chemicals_chemical_name_ko ON chemicals(chemical_name_ko);
+CREATE INDEX idx_chemicals_verification_status ON chemicals(verification_status);
+
+-- GHS 분류 정보 테이블 (화학물질과 직접 연결)
+CREATE TABLE IF NOT EXISTS chemical_ghs_info (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id) ON DELETE CASCADE,
+  ghs_code VARCHAR(50) NOT NULL,
+  hazard_class VARCHAR(255),
+  hazard_category VARCHAR(50),
+  signal_word VARCHAR(50), -- 위험, 경고
+  hazard_statement TEXT,
+  hazard_statement_code VARCHAR(50), -- H코드
+  precautionary_statement TEXT,
+  precautionary_statement_code VARCHAR(255), -- P코드
+  ghs_pictogram VARCHAR(255), -- 그림문자 정보
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_by UUID
+);
+
+CREATE INDEX idx_chemical_ghs_chemical_id ON chemical_ghs_info(chemical_id);
+CREATE INDEX idx_chemical_ghs_code ON chemical_ghs_info(ghs_code);
+
+-- 화학물질 독성 정보 테이블
+CREATE TABLE IF NOT EXISTS chemical_toxicity (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id) ON DELETE CASCADE,
+  toxicity_type VARCHAR(100), -- 급성독성, 피부부식성, 발암성 등
+  toxicity_category VARCHAR(50), -- 카테고리 1, 2, 3 등
+  exposure_route VARCHAR(50), -- 경구, 경피, 흡입
+  test_species VARCHAR(100), -- 실험동물 종류
+  test_value VARCHAR(100), -- LD50, LC50 등 수치
+  test_unit VARCHAR(50), -- mg/kg, ppm 등
+  health_effects TEXT, -- 건강 영향
+  symptoms TEXT, -- 증상
+  first_aid_measures TEXT, -- 응급조치
+  chronic_effects TEXT, -- 만성 영향
+  target_organs TEXT, -- 표적장기
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  data_source VARCHAR(255), -- 데이터 출처
+  reliability_score DECIMAL(3,2) -- 신뢰도 점수
+);
+
+CREATE INDEX idx_chemical_toxicity_chemical_id ON chemical_toxicity(chemical_id);
+CREATE INDEX idx_chemical_toxicity_type ON chemical_toxicity(toxicity_type);
+
+-- 화학물질 규제 정보 테이블
+CREATE TABLE IF NOT EXISTS chemical_regulations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id) ON DELETE CASCADE,
+  regulation_type VARCHAR(100), -- REACH, K-REACH, TSCA 등
+  regulation_status VARCHAR(50), -- 등록완료, 제한물질, 금지물질 등
+  restriction_info TEXT, -- 제한 내용
+  registration_number VARCHAR(100), -- 등록번호
+  effective_date DATE, -- 시행일
+  restriction_limit VARCHAR(100), -- 제한 농도/양
+  country_code VARCHAR(10), -- 국가코드
+  regulatory_body VARCHAR(100), -- 규제기관
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_chemical_regulations_chemical_id ON chemical_regulations(chemical_id);
+CREATE INDEX idx_chemical_regulations_type ON chemical_regulations(regulation_type);
+
+-- 화학물질 사용용도 테이블
+CREATE TABLE IF NOT EXISTS chemical_uses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id) ON DELETE CASCADE,
+  use_category VARCHAR(100), -- 산업용, 소비자용, 전문가용
+  specific_use VARCHAR(255), -- 구체적 용도
+  use_description TEXT, -- 용도 설명
+  concentration_range VARCHAR(100), -- 농도 범위
+  frequency_of_use VARCHAR(50), -- 사용 빈도
+  exposure_potential VARCHAR(50), -- 노출 가능성 (높음/중간/낮음)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_chemical_uses_chemical_id ON chemical_uses(chemical_id);
+
+-- 기존 product_ingredients 테이블 수정 (chemicals 테이블과 연결)
+-- ALTER TABLE product_ingredients ADD COLUMN chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id);
+-- CREATE INDEX idx_product_ingredients_chemical_id ON product_ingredients(chemical_id);
+
+-- AI 학습 데이터를 위한 화학물질 설명문 테이블
+CREATE TABLE IF NOT EXISTS chemical_descriptions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id) ON DELETE CASCADE,
+  description_type VARCHAR(50), -- 주성분설명, 독성설명, 경고문설명
+  description TEXT NOT NULL,
+  target_audience VARCHAR(50), -- 일반사용자, 전문가
+  language_code VARCHAR(10) DEFAULT 'ko',
+  generated_by VARCHAR(50), -- AI, 전문가, 크롤링
+  quality_score DECIMAL(3,2),
+  status VARCHAR(20) DEFAULT 'draft', -- draft, reviewed, approved
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  reviewed_by UUID
+);
+
+CREATE INDEX idx_chemical_descriptions_chemical_id ON chemical_descriptions(chemical_id);
+CREATE INDEX idx_chemical_descriptions_type ON chemical_descriptions(description_type);
+CREATE INDEX idx_chemical_descriptions_status ON chemical_descriptions(status);
+
+-- 화학물질 QA 데이터 테이블
+CREATE TABLE IF NOT EXISTS chemical_qa_pairs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id) ON DELETE CASCADE,
+  description_id UUID REFERENCES chemical_descriptions(id),
+  qa_user_type VARCHAR(20), -- 일반사용자, 전문가
+  qa_type VARCHAR(50), -- 성분이해, 독성설명, 경고문이해, 사용법안내
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  sequence_order INTEGER DEFAULT 0,
+  confidence_score DECIMAL(3,2), -- 답변 신뢰도
+  generated_by VARCHAR(50), -- AI모델명 또는 전문가
+  validation_status VARCHAR(20) DEFAULT 'pending', -- validated, pending, rejected
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  validated_at TIMESTAMP WITH TIME ZONE,
+  validated_by UUID
+);
+
+CREATE INDEX idx_chemical_qa_chemical_id ON chemical_qa_pairs(chemical_id);
+CREATE INDEX idx_chemical_qa_user_type ON chemical_qa_pairs(qa_user_type);
+CREATE INDEX idx_chemical_qa_type ON chemical_qa_pairs(qa_type);
+
+-- 화학물질 동의어/별명 테이블
+CREATE TABLE IF NOT EXISTS chemical_synonyms (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chemical_id VARCHAR(50) REFERENCES chemicals(chemical_id) ON DELETE CASCADE,
+  synonym_name VARCHAR(255) NOT NULL,
+  synonym_type VARCHAR(50), -- 상품명, 일반명, 학명, 약어
+  language_code VARCHAR(10) DEFAULT 'ko',
+  is_primary BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_chemical_synonyms_chemical_id ON chemical_synonyms(chemical_id);
+CREATE INDEX idx_chemical_synonyms_name ON chemical_synonyms(synonym_name);
+
+-- =====================================================
+-- 데이터 뷰 (PDF 요구사항에 맞춘 통합 뷰)
+-- =====================================================
+
+-- 화학물질 완전 정보 뷰 (AI 학습용)
+CREATE VIEW v_chemical_complete_info AS
+SELECT 
+  c.chemical_id,
+  c.chemical_name_ko,
+  c.chemical_name_en,
+  c.cas_no,
+  c.chemical_formula,
+  c.smiles,
+  -- GHS 정보
+  cg.ghs_code,
+  cg.hazard_class,
+  cg.signal_word,
+  cg.hazard_statement,
+  cg.precautionary_statement,
+  -- 독성 정보
+  ct.toxicity_type,
+  ct.exposure_route,
+  ct.health_effects,
+  ct.first_aid_measures,
+  -- 설명문
+  cd.description,
+  cd.description_type,
+  cd.target_audience,
+  -- QA 정보
+  json_agg(
+    json_build_object(
+      'qa_user_type', cqa.qa_user_type,
+      'qa_type', cqa.qa_type,
+      'question', cqa.question,
+      'answer', cqa.answer,
+      'confidence_score', cqa.confidence_score
+    ) ORDER BY cqa.sequence_order
+  ) FILTER (WHERE cqa.id IS NOT NULL) as qa_pairs
+FROM chemicals c
+LEFT JOIN chemical_ghs_info cg ON c.chemical_id = cg.chemical_id
+LEFT JOIN chemical_toxicity ct ON c.chemical_id = ct.chemical_id
+LEFT JOIN chemical_descriptions cd ON c.chemical_id = cd.chemical_id
+LEFT JOIN chemical_qa_pairs cqa ON c.chemical_id = cqa.chemical_id
+WHERE c.status = 'collected' 
+  AND c.verification_status IN ('verified', 'pending')
+GROUP BY c.chemical_id, c.chemical_name_ko, c.chemical_name_en, c.cas_no, 
+         c.chemical_formula, c.smiles, cg.ghs_code, cg.hazard_class, cg.signal_word,
+         cg.hazard_statement, cg.precautionary_statement, ct.toxicity_type, 
+         ct.exposure_route, ct.health_effects, ct.first_aid_measures,
+         cd.description, cd.description_type, cd.target_audience;
+
+-- 화학물질 통계 뷰
+CREATE VIEW v_chemical_stats AS
+SELECT 
+  COUNT(*) as total_chemicals,
+  COUNT(CASE WHEN verification_status = 'verified' THEN 1 END) as verified_count,
+  COUNT(CASE WHEN cas_no IS NOT NULL THEN 1 END) as with_cas_count,
+  COUNT(CASE WHEN smiles IS NOT NULL THEN 1 END) as with_smiles_count,
+  COUNT(DISTINCT collected_source) as data_sources_count
+FROM chemicals
+WHERE status = 'collected';
+
+-- =====================================================
+-- 트리거 추가
+-- =====================================================
+
+-- chemicals 테이블 updated_at 트리거
+CREATE TRIGGER update_chemicals_updated_at 
+  BEFORE UPDATE ON chemicals 
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- =====================================================
+-- 데이터 마이그레이션을 위한 함수
+-- =====================================================
+
+-- product_ingredients에서 chemicals로 데이터 마이그레이션
+CREATE OR REPLACE FUNCTION migrate_ingredients_to_chemicals()
+RETURNS INTEGER AS $$
+DECLARE
+  migrated_count INTEGER := 0;
+  ingredient_record RECORD;
+BEGIN
+  -- product_ingredients의 화학물질 정보를 chemicals 테이블로 복사
+  FOR ingredient_record IN 
+    SELECT DISTINCT ON (cas_number) 
+      main_ingredient, cas_number, chemical_formula, 
+      molecular_weight, iupac_name, smiles_code, status
+    FROM product_ingredients 
+    WHERE cas_number IS NOT NULL
+  LOOP
+    INSERT INTO chemicals (
+      chemical_id, chemical_name_ko, cas_no, chemical_formula,
+      molecular_weight, iupac_name, smiles, status,
+      collected_method, collected_source
+    ) VALUES (
+      'CHEM-' || EXTRACT(epoch FROM NOW()) || '-' || migrated_count,
+      ingredient_record.main_ingredient,
+      ingredient_record.cas_number,
+      ingredient_record.chemical_formula,
+      ingredient_record.molecular_weight,
+      ingredient_record.iupac_name,
+      ingredient_record.smiles_code,
+      ingredient_record.status,
+      'migration_from_ingredients',
+      'product_ingredients_table'
+    ) ON CONFLICT (cas_no) DO NOTHING;
+    
+    migrated_count := migrated_count + 1;
+  END LOOP;
+  
+  RETURN migrated_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- JSON 내보내기 함수 (AI 학습용)
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION export_chemical_training_data(p_chemical_id VARCHAR)
+RETURNS JSON AS $$
+DECLARE
+  result JSON;
+BEGIN
+  SELECT json_build_object(
+    'info', json_build_object(
+      'chemical_id', c.chemical_id,
+      'created_date', c.created_at,
+      'data_version', '1.0'
+    ),
+    'chemical_data', json_build_object(
+      'chemical_name_ko', c.chemical_name_ko,
+      'chemical_name_en', c.chemical_name_en,
+      'cas_no', c.cas_no,
+      'chemical_formula', c.chemical_formula,
+      'smiles', c.smiles,
+      'physical_properties', json_build_object(
+        'melting_point', c.melting_point,
+        'boiling_point', c.boiling_point,
+        'density', c.density
+      )
+    ),
+    'ghs_info', (
+      SELECT json_agg(
+        json_build_object(
+          'ghs_code', ghs_code,
+          'hazard_class', hazard_class,
+          'signal_word', signal_word,
+          'hazard_statement', hazard_statement,
+          'precautionary_statement', precautionary_statement
+        )
+      )
+      FROM chemical_ghs_info 
+      WHERE chemical_id = p_chemical_id
+    ),
+    'toxicity_info', (
+      SELECT json_agg(
+        json_build_object(
+          'toxicity_type', toxicity_type,
+          'exposure_route', exposure_route,
+          'health_effects', health_effects,
+          'first_aid_measures', first_aid_measures
+        )
+      )
+      FROM chemical_toxicity 
+      WHERE chemical_id = p_chemical_id
+    ),
+    'descriptions', (
+      SELECT json_agg(
+        json_build_object(
+          'description_type', description_type,
+          'description', description,
+          'target_audience', target_audience
+        )
+      )
+      FROM chemical_descriptions 
+      WHERE chemical_id = p_chemical_id AND status = 'approved'
+    ),
+    'qa_pairs', (
+      SELECT json_agg(
+        json_build_object(
+          'qa_user_type', qa_user_type,
+          'qa_type', qa_type,
+          'question', question,
+          'answer', answer,
+          'confidence_score', confidence_score
+        ) ORDER BY sequence_order
+      )
+      FROM chemical_qa_pairs 
+      WHERE chemical_id = p_chemical_id AND validation_status = 'validated'
+    )
+  ) INTO result
+  FROM chemicals c
+  WHERE c.chemical_id = p_chemical_id
+    AND c.status = 'collected';
+  
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+

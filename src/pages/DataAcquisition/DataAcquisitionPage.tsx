@@ -18,8 +18,9 @@ const DataAcquisitionPage: React.FC = () => {
   const [weekCount, setWeekCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
-  useEffect(() => {
-    const fetchStats = async () => {
+  // 통계 데이터 새로고침 함수
+  const fetchStats = async () => {
+    try {
       const today = new Date();
       const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString();
 
@@ -27,39 +28,69 @@ const DataAcquisitionPage: React.FC = () => {
       sunday.setDate(sunday.getDate() - sunday.getDay());
       const weekStart = new Date(sunday.setHours(0, 0, 0, 0)).toISOString();
 
-      const { count: todayWork } = await supabase
-        .from('work_logs')
+      // 1. 오늘 수집된 데이터 (products + chemicals 테이블 기준)
+      const { count: todayProducts } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', todayStart);
+        
+      const { count: todayChemicals } = await supabase
+        .from('chemicals')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', todayStart);
 
-      const { count: weekWork } = await supabase
-        .from('work_logs')
+      // 2. 이번 주 수집된 데이터
+      const { count: weekProducts } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', weekStart);
+        
+      const { count: weekChemicals } = await supabase
+        .from('chemicals')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', weekStart);
 
+      // 3. 대기 중인 파일 (processing 상태)
       const { count: pending } = await supabase
         .from('msds_documents')
         .select('*', { count: 'exact', head: true })
         .eq('extraction_status', 'pending');
 
+      // 4. 처리 오류 (failed 상태)
       const { count: failed } = await supabase
         .from('msds_documents')
         .select('*', { count: 'exact', head: true })
         .eq('extraction_status', 'failed');
 
-      setTodayCount(todayWork ?? 0);
-      setWeekCount(weekWork ?? 0);
+      setTodayCount((todayProducts ?? 0) + (todayChemicals ?? 0));
+      setWeekCount((weekProducts ?? 0) + (weekChemicals ?? 0));
       setPendingCount(pending ?? 0);
       setErrorCount(failed ?? 0);
-    };
+      
+    } catch (error) {
+      console.error('통계 데이터 로딩 에러:', error);
+    }
+  };
 
-    fetchStats();
-  }, []);
-
-  // 업로드 이력 데이터 가져오기 (새로운 스키마에 맞춤)
+  // 업로드 이력 데이터 가져오기 (metadata 테이블에서 조회)
   const fetchUploadHistory = async () => {
     try {
-      // MSDS 문서 업로드 이력 조회
+      setLoading(true);
+      
+      // 1. metadata 테이블에서 업로드 이력 조회 (파일 업로드 + 화학물질 추가 모두 포함)
+      const { data: metadataData, error: metadataError } = await supabase
+        .from('metadata')
+        .select('*')
+        .eq('data_type', 'upload_history')
+        .in('meta_key', ['file_upload_log', 'chemical_upload_log'])
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (metadataError) {
+        console.error('업로드 이력 조회 에러:', metadataError);
+      }
+
+      // 2. MSDS 문서 업로드 이력도 조회
       const { data: msdsData, error: msdsError } = await supabase
         .from('msds_documents')
         .select(`
@@ -78,26 +109,65 @@ const DataAcquisitionPage: React.FC = () => {
         console.error('MSDS 문서 이력 에러:', msdsError);
       }
 
-      // 기존 upload_history 테이블도 확인 (있는 경우)
-      const { data: uploadData, error: uploadError } = await supabase
-        .from('upload_history')
-        .select('*')
+      // 3. 화학물질 데이터 수집 이력 조회
+      const { data: chemicalsData, error: chemicalsError } = await supabase
+        .from('chemicals')
+        .select(`
+          chemical_id,
+          chemical_name_ko,
+          cas_no,
+          collected_source,
+          collected_method,
+          status,
+          created_at
+        `)
         .order('created_at', { ascending: false })
         .limit(10);
-        
-      // 두 데이터를 합쳐서 포맷팅
+
+      if (chemicalsError) {
+        console.error('화학물질 이력 에러:', chemicalsError);
+      }
+
       const formattedHistory: UploadHistory[] = [];
 
-      // MSDS 문서 데이터 포맷팅
+      // 4. metadata에서 가져온 업로드 이력 포맷팅 (화학물질 관련 제외)
+      if (metadataData) {
+        metadataData.forEach((item: any) => {
+          try {
+            const uploadInfo = JSON.parse(item.meta_value);
+            // 화학물질 관련 데이터는 제외 (이미 chemicals 테이블에서 별도 조회)
+            if (uploadInfo.data_type === 'chemical' || uploadInfo.data_type === '화학물질') {
+              return;
+            }
+            formattedHistory.push({
+              id: item.id,
+              filename: uploadInfo.filename,
+              file_size: uploadInfo.file_size,
+              upload_date: new Date(uploadInfo.upload_date).toLocaleString('ko-KR'),
+              status: uploadInfo.status,
+              records_count: uploadInfo.records_count,
+              file_type: uploadInfo.file_type,
+              data_type: uploadInfo.data_type,
+              table_name: uploadInfo.table_name,
+              error_message: uploadInfo.error_message
+            });
+          } catch (parseError) {
+            console.error('메타데이터 파싱 에러:', parseError);
+          }
+        });
+      }
+
+      // 5. MSDS 문서 데이터 포맷팅
       if (msdsData) {
         msdsData.forEach((item: any) => {
           formattedHistory.push({
-            id: item.id,
+            id: `msds_${item.id}`,
             filename: item.file_name,
-            file_size: item.file_size,
+            file_size: item.file_size?.toString() || 'Unknown',
             upload_date: new Date(item.created_at).toLocaleString('ko-KR'),
-            status: item.extraction_status || 'processing',
-            records_count: 1, // MSDS는 보통 1개 제품
+            status: item.extraction_status === 'completed' ? '업로드 완료' : 
+                   item.extraction_status === 'failed' ? '업로드 실패' : '처리 중',
+            records_count: 1,
             file_type: 'PDF',
             data_type: 'msds',
             table_name: 'msds_documents',
@@ -106,30 +176,30 @@ const DataAcquisitionPage: React.FC = () => {
         });
       }
 
-      // 기존 업로드 데이터 포맷팅 (있는 경우)
-      if (uploadData && !uploadError) {
-        uploadData.forEach((item: any) => {
+      // 6. 화학물질 데이터 포맷팅
+      if (chemicalsData) {
+        chemicalsData.forEach((item: any) => {
           formattedHistory.push({
-            id: item.id,
-            filename: item.filename,
-            file_size: item.file_size,
+            id: `chem_${item.chemical_id}`,
+            filename: `${item.chemical_name_ko} (${item.cas_no})`,
+            file_size: 'N/A',
             upload_date: new Date(item.created_at).toLocaleString('ko-KR'),
-            status: item.status,
-            records_count: item.records_count,
-            file_type: item.file_type,
-            data_type: item.data_type || 'chemicals',
-            table_name: item.table_name,
-            error_message: item.error_message
+            status: item.status === 'collected' ? '수집 완료' : item.status,
+            records_count: 1,
+            file_type: 'CHEMICAL',
+            data_type: '화학물질',
+            table_name: 'chemicals',
+            error_message: undefined
           });
         });
       }
 
-      // 날짜순 정렬
+      // 7. 날짜순 정렬
       formattedHistory.sort((a, b) => 
         new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
       );
 
-      setRecentUploads(formattedHistory.slice(0, 10));
+      setRecentUploads(formattedHistory.slice(0, 15));
       
     } catch (error) {
       console.error('업로드 이력 로딩 에러:', error);
@@ -139,77 +209,113 @@ const DataAcquisitionPage: React.FC = () => {
     }
   };
   
+  // 초기 로딩 및 데이터 새로고침
   useEffect(() => {
-    fetchUploadHistory();
+    const initializeData = async () => {
+      await Promise.all([
+        fetchStats(),
+        fetchUploadHistory()
+      ]);
+    };
+    
+    initializeData();
   }, []);
+  
+  // 업로드 완료 후 콜백 함수 (통계와 이력 모두 새로고침)
+  const handleUploadComplete = async () => {
+    await Promise.all([
+      fetchStats(),
+      fetchUploadHistory()
+    ]);
+  };
 
-  // 검색 결과를 DB에 추가하는 핸들러 (새로운 스키마에 맞춤)
+  // 검색 결과를 DB에 추가하는 핸들러 (chemicals 테이블에 저장)
   const handleAddToDb = async (item: SearchResult) => {
     try {
-      // 1. 먼저 제품 정보 확인/생성
-      const productId = `PROD-${Date.now()}`;
-      
-      const { data: existingProduct } = await supabase
-        .from('products')
-        .select('product_id')
-        .eq('product_name', item.chemical_name_ko)
+      // 1. 기존 화학물질 중복 확인 (CAS 번호 기준)
+      const { data: existingChemical } = await supabase
+        .from('chemicals')
+        .select('chemical_id')
+        .eq('cas_no', item.cas_no)
         .single();
 
-      let finalProductId = productId;
-
-      if (!existingProduct) {
-        // 새로운 제품 생성
-        const { error: productError } = await supabase
-          .from('products')
-          .insert({
-            product_id: productId,
-            product_name: item.chemical_name_ko,
-            product_category: '기타',
-            collected_source: item.source_api,
-            collected_method: 'external_search',
-            status: 'collected'
-          });
-
-        if (productError) throw productError;
-      } else {
-        finalProductId = existingProduct.product_id;
-      }
-
-      // 2. 제품 성분 정보 확인
-      const { data: existing } = await supabase
-        .from('product_ingredients')
-        .select('id')
-        .eq('cas_number', item.cas_no)
-        .eq('product_id', finalProductId);
-
-      if (existing && existing.length > 0) {
-        alert(`${item.chemical_name_ko} (CAS: ${item.cas_no})는 이미 DB에 존재합니다.`);
+      if (existingChemical) {
+        alert(`${item.chemical_name_ko} (CAS: ${item.cas_no})는 이미 화학물질 DB에 존재합니다.`);
         return;
       }
 
-      // 3. 제품 성분 정보 추가
-      const ingredientId = `ING-${Date.now()}`;
+      // 2. 새로운 화학물질 ID 생성
+      const chemicalId = `CHEM-${Date.now()}`;
       
-      const { error: ingredientError } = await supabase
-        .from('product_ingredients')
+      // 3. chemicals 테이블에 화학물질 정보 저장
+      const { error: chemicalError } = await supabase
+        .from('chemicals')
         .insert({
-          product_id: finalProductId,
-          ingredient_id: ingredientId,
-          main_ingredient: item.chemical_name_ko,
-          cas_number: item.cas_no,
-          status: 'collected'
+          chemical_id: chemicalId,
+          chemical_name_ko: item.chemical_name_ko,
+          cas_no: item.cas_no,
+          collected_source: item.source_api,
+          collected_method: 'external_search',
+          collected_date: new Date().toISOString().split('T')[0],
+          status: 'collected',
+          verification_status: 'pending',
+          raw_data: JSON.stringify(item) // 원본 검색 데이터 보존
         });
 
-      if (ingredientError) throw ingredientError;
+      if (chemicalError) throw chemicalError;
 
-      alert(`${item.chemical_name_ko}이(가) DB에 성공적으로 추가되었습니다.`);
+      // 4. GHS 정보가 있다면 chemical_ghs_info 테이블에도 저장
+      if (item.ghs_code) {
+        const { error: ghsError } = await supabase
+          .from('chemical_ghs_info')
+          .insert({
+            chemical_id: chemicalId,
+            ghs_code: item.ghs_code
+          });
+        
+        if (ghsError) {
+          console.warn('GHS 정보 저장 실패:', ghsError);
+        }
+      }
+
+      alert(`화학물질 "${item.chemical_name_ko}"이(가) 성공적으로 추가되었습니다.`);
       
-      // 업로드 이력 새로고침
-      fetchUploadHistory();
+      // 5. 업로드 이력을 metadata 테이블에 기록
+      const uploadLogData = {
+        filename: `${item.chemical_name_ko} (${item.cas_no})`,
+        file_size: 'N/A',
+        upload_date: new Date().toISOString(),
+        status: '수집 완료',
+        records_count: 1,
+        file_type: 'CHEMICAL',
+        data_type: '화학물질',
+        table_name: 'chemicals',
+        source: item.source_api,
+        method: 'external_search'
+      };
+
+      const { error: metadataError } = await supabase
+        .from('metadata')
+        .insert({
+          data_type: 'upload_history',
+          reference_id: chemicalId,
+          meta_key: 'chemical_upload_log',
+          meta_value: JSON.stringify(uploadLogData)
+        });
+
+      if (metadataError) {
+        console.warn('업로드 이력 기록 실패:', metadataError);
+      }
+      
+      // 6. 통계 및 업로드 이력 새로고침
+      await Promise.all([
+        fetchStats(),
+        fetchUploadHistory()
+      ]);
       
     } catch (error) {
-      alert('DB에 추가하는 중 오류가 발생했습니다.');
-      console.error(error);
+      console.error('화학물질 DB 추가 오류:', error);
+      alert('화학물질을 DB에 추가하는 중 오류가 발생했습니다.');
     }
   };
 
@@ -265,7 +371,7 @@ const DataAcquisitionPage: React.FC = () => {
         {/* 메인 그리드 - 외부 검색 & 파일 업로드 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '30px' }}>
           <ExternalSearch onAddToDb={handleAddToDb} />
-          <FileUpload onUploadComplete={fetchUploadHistory} />
+          <FileUpload onUploadComplete={handleUploadComplete} />
         </div>
         
         {/* 업로드 이력 테이블 */}

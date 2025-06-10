@@ -45,6 +45,22 @@ const DashboardPage = () => {
     { key: 'draft', label: '초안', color: '#f59e0b' },
   ];
 
+  // 카테고리 매핑 함수 (CSV 데이터 → 표준 카테고리)
+  const mapToStandardCategory = (csvCategory: string): string => {
+    const categoryMap: { [key: string]: string } = {
+      '세정제': '세정제품',
+      '세탁세제': '세탁제품', 
+      '표백제/섬유유연제': '세탁제품',
+      '광택제': '코팅제품',
+      '방향제': '방향·탈취제품',
+      '탈취제': '방향·탈취제품',
+      '살균제': '살균제품',
+      '다림질보조제': '세탁제품',
+      '제습제': '기타'
+    };
+    return categoryMap[csvCategory] || '기타';
+  };
+
   const PRODUCT_CATEGORIES = [
     '세정제품', '세탁제품', '코팅제품', '접착·접합제품', '방향·탈취제품',
     '염색·도색제품', '자동차 전용 제품', '인쇄 및 문서관련 제품', '미용제품',
@@ -59,13 +75,11 @@ const DashboardPage = () => {
       const [
         { data: productsData, error: productsError },
         { data: trainingData, error: trainingError },
-        { data: categoriesDbData, error: categoriesError }, // DB에서 카테고리 목록 직접 가져오기
         { data: workersData, error: workersError },
         { data: assignmentsData, error: assignmentsError }
       ] = await Promise.all([
-        supabase.from('products').select('id, product_category, status'),
+        supabase.from('products').select('id, product_category, status, created_at'),
         supabase.from('ai_training_data').select('review_status'),
-        supabase.from('product_categories').select('category_name').order('id'), // DB에서 카테고리 목록 조회
         supabase.from('workers').select('id, name, role, organization'), 
         supabase.from('work_assignments').select('assigned_to, target_count, completed_count')
       ]);
@@ -73,7 +87,6 @@ const DashboardPage = () => {
       // 2. 에러 핸들링
       if (productsError) throw productsError;
       if (trainingError) throw trainingError;
-      if (categoriesError) throw categoriesError;
       if (workersError) throw workersError;
       if (assignmentsError) throw assignmentsError;
       
@@ -114,45 +127,63 @@ const DashboardPage = () => {
       });
       setProgressData(formattedProgress);
 
-      // 5. 제품 카테고리별 분포 계산
+      // 5. 제품 카테고리별 분포 계산 (표준 카테고리로 매핑)
       const categoryCounts: { [key: string]: number } = {};
       productsData?.forEach(product => {
-        const category = product.product_category || '기타';
-        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        const rawCategory = product.product_category || '기타';
+        const standardCategory = mapToStandardCategory(rawCategory);
+        categoryCounts[standardCategory] = (categoryCounts[standardCategory] || 0) + 1;
       });
 
-      // DB에서 가져온 카테고리 목록을 기준으로 항상 모든 항목 생성
-      const dbCategoryNames = categoriesDbData?.map(c => c.category_name) || [];
+      // 실제 데이터에서 발견된 카테고리들을 기준으로 정렬
       const categoryColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#059669', '#d97706', '#7c3aed'];
-      const formattedCategories = dbCategoryNames.map((categoryName, index) => {
-        const count = categoryCounts[categoryName] || 0;
+      const sortedCategories = Object.entries(categoryCounts)
+        .sort(([,a], [,b]) => b - a) // 건수 많은 순으로 정렬
+        .slice(0, 8); // 상위 8개만 표시
+      
+      const formattedCategories = sortedCategories.map(([categoryName, count], index) => {
         const percent = totalProducts > 0 ? Math.round((count / totalProducts) * 100) : 0;
         return {
           label: `${categoryName}: ${count}건`,
           percent: percent,
           color: categoryColors[index % categoryColors.length]
         };
-      }).sort((a,b) => b.percent - a.percent).slice(0, 8); // 점유율 순으로 8개만 표시
+      });
       
       setCategoryData(formattedCategories);
 
-      // 6. 작업자별 현황 계산
-      if (!workersData || !assignmentsData) {
-        setWorkerStats([]);
-      } else {
-        const formattedWorkerStats = workersData.map(worker => {
-          const assignment = assignmentsData.find(a => a.assigned_to === worker.id);
-          return {
-            worker_id: worker.id?.toString() || 'unknown',
-            worker_name: worker.name || '알 수 없음',
-            worker_role: worker.role || worker.organization || '미지정',
-            total_assigned: assignment?.target_count || 0,
-            total_completed: assignment?.completed_count || 0,
-            rejection_rate: 0
-          };
-        }).filter(w => w.total_assigned > 0); // 할당된 작업자만 표시
-        setWorkerStats(formattedWorkerStats);
-      }
+         if (!workersData) {
+          setWorkerStats([]);
+        } else {
+          const formattedWorkerStats = workersData.map(worker => {
+            const assignment = assignmentsData?.find(a => a.assigned_to === worker.id);
+            
+            // --- ✨ 여기가 수정된 부분입니다 ---
+            const role = worker.role;
+            const org = worker.organization;
+            let roleDisplay = '미지정'; // 기본값
+
+            if (role && org) {
+              roleDisplay = `${role} / ${org}`; // 역할과 소속이 모두 있는 경우
+            } else if (role) {
+              roleDisplay = role; // 역할만 있는 경우
+            } else if (org) {
+              roleDisplay = org; // 소속만 있는 경우
+            }
+            // --- ✨ 수정 끝 ---
+
+            return {
+              worker_id: worker.id?.toString() || 'unknown',
+              worker_name: worker.name || '알 수 없음',
+              worker_role: roleDisplay, // 수정된 값을 할당합니다.
+              total_assigned: assignment?.target_count || 0,
+              total_completed: assignment?.completed_count || 0,
+              rejection_rate: 0 // 반려율은 현재 계산 로직이 없으므로 0으로 유지
+            };
+          });
+          
+          setWorkerStats(formattedWorkerStats);
+        }
 
     } catch (error) {
       console.error('대시보드 데이터 로딩 에러:', error);
@@ -166,6 +197,13 @@ const DashboardPage = () => {
 }, []);
   useEffect(() => {
     fetchDashboardData();
+    
+    // 주기적으로 데이터 새로고침 (30초마다)
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
   if (loading) {
