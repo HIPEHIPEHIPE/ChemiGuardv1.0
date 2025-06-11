@@ -20,11 +20,30 @@ interface UploadHistoryTableProps {
   uploads: UploadHistory[];
   loading: boolean;
   onRefresh: () => void;
+  totalCount?: number;
+  currentPage?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
-const UploadHistoryTable: React.FC<UploadHistoryTableProps> = ({ uploads, loading, onRefresh }) => {
+const UploadHistoryTable: React.FC<UploadHistoryTableProps> = ({ 
+  uploads, 
+  loading, 
+  onRefresh, 
+  totalCount = 0,
+  currentPage = 1,
+  pageSize = 10,
+  onPageChange,
+  onPageSizeChange 
+}) => {
   const [selectedUpload, setSelectedUpload] = useState<UploadHistory | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalCount);
 
   const getDataTypeDisplay = (dataType: string | undefined) => {
     switch(dataType) {
@@ -51,12 +70,66 @@ const UploadHistoryTable: React.FC<UploadHistoryTableProps> = ({ uploads, loadin
     setSelectedUpload(null);
   };
 
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    if (onPageChange && page >= 1 && page <= totalPages) {
+      onPageChange(page);
+    }
+  };
+
+  // 페이지 크기 변경 핸들러
+  const handlePageSizeChange = (size: number) => {
+    if (onPageSizeChange) {
+      onPageSizeChange(size);
+    }
+  };
+
+  // 페이지 번호 배열 생성 (현재 페이지 주변 5개 페이지)
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <>
       <div style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '12px', boxShadow: '0 0 10px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ marginTop: 0, marginBottom: 0 }}>최근 업로드 이력</h3>
-          <StyledButton bgColor="#6b7280" onClick={onRefresh}>🔄 새로고침</StyledButton>
+          <div>
+            <h3 style={{ marginTop: 0, marginBottom: '4px' }}>업로드 이력</h3>
+            <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+              총 {totalCount}건 • {startIndex}-{endIndex}번째 항목
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <select 
+              value={pageSize} 
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid #d1d5db',
+                fontSize: '14px',
+                backgroundColor: 'white'
+              }}
+            >
+              <option value={10}>10개씩</option>
+              <option value={20}>20개씩</option>
+              <option value={50}>50개씩</option>
+              <option value={100}>100개씩</option>
+            </select>
+            <StyledButton bgColor="#6b7280" onClick={onRefresh}>🔄 새로고침</StyledButton>
+          </div>
         </div>
         
         {loading ? (
@@ -131,6 +204,112 @@ const UploadHistoryTable: React.FC<UploadHistoryTableProps> = ({ uploads, loadin
               })}
             </tbody>
           </table>
+        )}
+        
+        {/* 페이지네이션 */}
+        {!loading && uploads.length > 0 && totalPages > 1 && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center',
+            alignItems: 'center', 
+            marginTop: '20px',
+            paddingTop: '20px',
+            borderTop: '1px solid #e5e7eb'
+          }}>
+            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+              페이지 {currentPage} / {totalPages}
+            </div>
+            
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              {/* 처음 페이지 */}
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                  color: currentPage === 1 ? '#9ca3af' : '#374151',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                처음
+              </button>
+              
+              {/* 이전 페이지 */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                  color: currentPage === 1 ? '#9ca3af' : '#374151',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                이전
+              </button>
+              
+              {/* 페이지 번호들 */}
+              {getPageNumbers().map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    backgroundColor: pageNum === currentPage ? '#3b82f6' : 'white',
+                    color: pageNum === currentPage ? 'white' : '#374151',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: pageNum === currentPage ? 'bold' : 'normal'
+                  }}
+                >
+                  {pageNum}
+                </button>
+              ))}
+              
+              {/* 다음 페이지 */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                  color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                다음
+              </button>
+              
+              {/* 마지막 페이지 */}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                  color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                마지막
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

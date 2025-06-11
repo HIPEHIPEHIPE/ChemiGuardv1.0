@@ -66,51 +66,51 @@ interface ColumnMapping {
 
 // 제품 데이터 컬럼 매핑
 const PRODUCT_COLUMN_MAPPINGS: ColumnMapping = {
-  'prdt_mstr_no': { target_column: 'product_id', required: true },
-  'prdtnm_kor': { target_column: 'product_name', required: true },
-  'prdtarm': { target_column: 'product_category' },
-  'prdtn_incme_cmpnynm': { target_column: 'manufacturer' },
-  'knd': { target_column: 'product_subcategory' },
-  'slfsfcfst_no': { target_column: 'source_reference' },
-  'wt': { target_column: 'usage_purpose', transform: (value) => `용량: ${value}` },
-  'cttpc': { target_column: 'collected_source' },
-  'stdusewt': { target_column: 'usage_purpose', transform: (value, existing) => `${existing || ''}\n사용법: ${value}`.trim() },
-  'useuppt_atpn': { target_column: 'usage_purpose', transform: (value, existing) => `${existing || ''}\n주의사항: ${value}`.trim() },
-  'product_name': { target_column: 'product_name', required: true },
-  'manufacturer': { target_column: 'manufacturer' },
-  'product_category': { target_column: 'product_category' },
-  '제품명': { target_column: 'product_name', required: true },
-  '제조사': { target_column: 'manufacturer' },
-  '카테고리': { target_column: 'product_category' },
-  '제품군': { target_column: 'product_category' },
+  ['prdt_mstr_no'.toLowerCase()]: { target_column: 'product_id', required: true },
+  ['prdtnm_kor'.toLowerCase()]: { target_column: 'product_name', required: true },
+  ['prdtarm'.toLowerCase()]: { target_column: 'product_category' },
+  ['prdtn_incme_cmpnynm'.toLowerCase()]: { target_column: 'manufacturer' },
+  ['knd'.toLowerCase()]: { target_column: 'product_subcategory' },
+  ['slfsfcfst_no'.toLowerCase()]: { target_column: 'source_reference' },
+  ['wt'.toLowerCase()]: { target_column: 'usage_purpose', transform: (value) => `용량: ${value}` },
+  ['cttpc'.toLowerCase()]: { target_column: 'collected_source' },
+  ['stdusewt'.toLowerCase()]: { target_column: 'usage_purpose', transform: (value, existing) => `${existing || ''}\n사용법: ${value}`.trim() },
+  ['useuppt_atpn'.toLowerCase()]: { target_column: 'usage_purpose', transform: (value, existing) => `${existing || ''}\n주의사항: ${value}`.trim() },
+  ['product_name'.toLowerCase()]: { target_column: 'product_name', required: true },
+  ['manufacturer'.toLowerCase()]: { target_column: 'manufacturer' },
+  ['product_category'.toLowerCase()]: { target_column: 'product_category' },
+  ['제품명'.toLowerCase()]: { target_column: 'product_name', required: true },
+  ['제조사'.toLowerCase()]: { target_column: 'manufacturer' },
+  ['카테고리'.toLowerCase()]: { target_column: 'product_category' },
+  ['제품군'.toLowerCase()]: { target_column: 'product_category' },
 };
 
 // 화학물질 데이터 컬럼 매핑
 const CHEMICAL_COLUMN_MAPPINGS: ColumnMapping = {
-  'chemical_name_ko': { target_column: 'chemical_name_ko', required: true },
-  'chemical_name_en': { target_column: 'chemical_name_en' },
-  'cas_no': { target_column: 'cas_no' },
-  'casNo': { target_column: 'cas_no' },
-  'ghs_code': { target_column: 'ghs_code' },
-  'smiles': { target_column: 'smiles' },
-  'chemical_formula': { target_column: 'chemical_formula' },
-  'molecular_weight': { target_column: 'molecular_weight' },
-  'iupac_name': { target_column: 'iupac_name' },
-  'physical_state': { target_column: 'physical_state' },
-  'melting_point': { target_column: 'melting_point' },
-  'boiling_point': { target_column: 'boiling_point' },
-  'density': { target_column: 'density' },
-  'solubility': { target_column: 'solubility' },
-  'flash_point': { target_column: 'flash_point' },
-  '화학물질명': { target_column: 'chemical_name_ko', required: true },
-  '영문명': { target_column: 'chemical_name_en' },
-  'CAS번호': { target_column: 'cas_no' },
-  '분자식': { target_column: 'chemical_formula' },
-  '분자량': { target_column: 'molecular_weight' },
-  '녹는점': { target_column: 'melting_point' },
-  '끓는점': { target_column: 'boiling_point' },
-  '밀도': { target_column: 'density' },
-  '용해도': { target_column: 'solubility' },
+  ['chemical_name_ko'.toLowerCase()]: { target_column: 'chemical_name_ko', required: true },
+  ['chemical_name_en'.toLowerCase()]: { target_column: 'chemical_name_en' },
+  ['cas_no'.toLowerCase()]: { target_column: 'cas_no' },
+  ['casno'.toLowerCase()]: { target_column: 'cas_no' },
+  ['ghs_code'.toLowerCase()]: { target_column: 'ghs_code' },
+  ['smiles'.toLowerCase()]: { target_column: 'smiles' },
+  ['chemical_formula'.toLowerCase()]: { target_column: 'chemical_formula' },
+  ['molecular_weight'.toLowerCase()]: { target_column: 'molecular_weight' },
+  ['iupac_name'.toLowerCase()]: { target_column: 'iupac_name' },
+  ['physical_state'.toLowerCase()]: { target_column: 'physical_state' },
+  ['melting_point'.toLowerCase()]: { target_column: 'melting_point' },
+  ['boiling_point'.toLowerCase()]: { target_column: 'boiling_point' },
+  ['density'.toLowerCase()]: { target_column: 'density' },
+  ['solubility'.toLowerCase()]: { target_column: 'solubility' },
+  ['flash_point'.toLowerCase()]: { target_column: 'flash_point' },
+  ['화학물질명'.toLowerCase()]: { target_column: 'chemical_name_ko', required: true },
+  ['영문명'.toLowerCase()]: { target_column: 'chemical_name_en' },
+  ['cas번호'.toLowerCase()]: { target_column: 'cas_no' },
+  ['분자식'.toLowerCase()]: { target_column: 'chemical_formula' },
+  ['분자량'.toLowerCase()]: { target_column: 'molecular_weight' },
+  ['녹는점'.toLowerCase()]: { target_column: 'melting_point' },
+  ['끓는점'.toLowerCase()]: { target_column: 'boiling_point' },
+  ['밀도'.toLowerCase()]: { target_column: 'density' },
+  ['용해도'.toLowerCase()]: { target_column: 'solubility' },
 };
 
 // 스타일 정의
@@ -200,42 +200,47 @@ const transformData = (item: any, mappings: ColumnMapping): any => {
 // 데이터 타입 감지 함수
 const detectDataType = (jsonData: any[]): 'chemicals' | 'products' => {
   if (jsonData.length === 0) return 'chemicals';
-  
+
   const sampleSize = Math.min(10, jsonData.length);
   const samples = jsonData.slice(0, sampleSize);
-  
+
   let chemicalScore = 0;
   let productScore = 0;
-  
+
+  const productIndicators = [
+    'prdt_mstr_no', 'prdtnm_kor', 'prdtarm', 'prdtn_incme_cmpnynm',
+    'product_name', 'manufacturer', '제품명', '제조사',
+    '제품코드', '세부코드', '브랜드명', '용도분류', '성분수', '주요성분', '최고위험등급'
+  ];
+
+  const chemicalIndicators = [
+    'chemical_name_ko', 'chemical_name_en', 'cas_no', 'casno', 'smiles',
+    '화학물질명', '영문명', 'cas번호'
+  ];
+
   samples.forEach(sample => {
-    const columns = Object.keys(sample).map(c => c.toLowerCase());
-    
-    const productIndicators = [
-      'prdt_mstr_no', 'prdtnm_kor', 'prdtarm', 'prdtn_incme_cmpnynm',
-      'product_name', 'manufacturer', '제품명', '제조사'
-    ];
-    
-    const chemicalIndicators = [
-      'chemical_name_ko', 'chemical_name_en', 'cas_no', 'casno', 'smiles',
-      '화학물질명', '영문명', 'cas번호'
-    ];
-    
+    const columns = Object.keys(sample).map(c => c.trim().toLowerCase());
+
     productIndicators.forEach(indicator => {
-      if (columns.some(col => col.includes(indicator.toLowerCase()))) {
+      if (columns.includes(indicator.toLowerCase())) {
         productScore += 1;
       }
     });
-    
+
     chemicalIndicators.forEach(indicator => {
-      if (columns.some(col => col.includes(indicator.toLowerCase()))) {
+      if (columns.includes(indicator.toLowerCase())) {
         chemicalScore += 1;
       }
     });
+
+    console.log('[DEBUG] Sample 컬럼:', columns);
+    console.log('[DEBUG] ProductIndicators hit:', productIndicators.filter(ind => columns.includes(ind.toLowerCase())));
+    console.log('[DEBUG] ChemicalIndicators hit:', chemicalIndicators.filter(ind => columns.includes(ind.toLowerCase())));
   });
-  
+
   const detectedType = productScore > chemicalScore ? 'products' : 'chemicals';
   console.log(`자동 감지 결과: ${detectedType} (Product Score: ${productScore}, Chemical Score: ${chemicalScore})`);
-  
+
   return detectedType;
 };
 
@@ -276,7 +281,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
           const result = Papa.parse(data as string, {
             header: true,
             skipEmptyLines: true,
-            transformHeader: header => header.trim().replace(/^\uFEFF/, ''),
+            transformHeader: header => header.trim().replace(/^\uFEFF/, '').toLowerCase(),
             dynamicTyping: true,
             delimitersToGuess: [',', '\t', '|', ';']
           });

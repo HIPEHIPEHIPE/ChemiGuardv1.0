@@ -18,6 +18,11 @@ const DataAcquisitionPage: React.FC = () => {
   const [weekCount, setWeekCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
+  
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   // 통계 데이터 새로고침 함수
   const fetchStats = async () => {
     try {
@@ -72,25 +77,45 @@ const DataAcquisitionPage: React.FC = () => {
     }
   };
 
-  // 업로드 이력 데이터 가져오기 (metadata 테이블에서 조회)
-  const fetchUploadHistory = async () => {
+  // 업로드 이력 데이터 가져오기 (페이지네이션 적용)
+  const fetchUploadHistory = async (page: number = currentPage, size: number = pageSize) => {
     try {
       setLoading(true);
       
-      // 1. metadata 테이블에서 업로드 이력 조회 (파일 업로드 + 화학물질 추가 모두 포함)
+      // 1. 전체 업로드 이력 개수 조회
+      const { count: metadataCount } = await supabase
+        .from('metadata')
+        .select('*', { count: 'exact', head: true })
+        .eq('data_type', 'upload_history')
+        .in('meta_key', ['file_upload_log', 'chemical_upload_log']);
+        
+      const { count: msdsCount } = await supabase
+        .from('msds_documents')
+        .select('*', { count: 'exact', head: true });
+        
+      const { count: chemicalCount } = await supabase
+        .from('chemicals')
+        .select('*', { count: 'exact', head: true });
+        
+      const totalRecords = (metadataCount || 0) + (msdsCount || 0) + (chemicalCount || 0);
+      setTotalCount(totalRecords);
+      
+      // 2. metadata 테이블에서 페이지네이션된 업로드 이력 조회
+      const metadataOffset = (page - 1) * Math.ceil(size / 3); // 3개 소스로 나누어 조회
       const { data: metadataData, error: metadataError } = await supabase
         .from('metadata')
         .select('*')
         .eq('data_type', 'upload_history')
         .in('meta_key', ['file_upload_log', 'chemical_upload_log'])
         .order('created_at', { ascending: false })
-        .limit(20);
+        .range(metadataOffset, metadataOffset + Math.ceil(size / 3) - 1);
 
       if (metadataError) {
         console.error('업로드 이력 조회 에러:', metadataError);
       }
 
-      // 2. MSDS 문서 업로드 이력도 조회
+      // 3. MSDS 문서 업로드 이력도 페이지네이션 적용
+      const msdsOffset = (page - 1) * Math.ceil(size / 3);
       const { data: msdsData, error: msdsError } = await supabase
         .from('msds_documents')
         .select(`
@@ -103,13 +128,14 @@ const DataAcquisitionPage: React.FC = () => {
           products(product_name)
         `)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .range(msdsOffset, msdsOffset + Math.ceil(size / 3) - 1);
 
       if (msdsError) {
         console.error('MSDS 문서 이력 에러:', msdsError);
       }
 
-      // 3. 화학물질 데이터 수집 이력 조회
+      // 4. 화학물질 데이터 수집 이력 조회 (페이지네이션 적용)
+      const chemicalOffset = (page - 1) * Math.ceil(size / 3);
       const { data: chemicalsData, error: chemicalsError } = await supabase
         .from('chemicals')
         .select(`
@@ -122,7 +148,7 @@ const DataAcquisitionPage: React.FC = () => {
           created_at
         `)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .range(chemicalOffset, chemicalOffset + Math.ceil(size / 3) - 1);
 
       if (chemicalsError) {
         console.error('화학물질 이력 에러:', chemicalsError);
@@ -130,7 +156,7 @@ const DataAcquisitionPage: React.FC = () => {
 
       const formattedHistory: UploadHistory[] = [];
 
-      // 4. metadata에서 가져온 업로드 이력 포맷팅 (화학물질 관련 제외)
+      // 5. metadata에서 가져온 업로드 이력 포맷팅 (화학물질 관련 제외)
       if (metadataData) {
         metadataData.forEach((item: any) => {
           try {
@@ -157,7 +183,7 @@ const DataAcquisitionPage: React.FC = () => {
         });
       }
 
-      // 5. MSDS 문서 데이터 포맷팅
+      // 6. MSDS 문서 데이터 포맷팅
       if (msdsData) {
         msdsData.forEach((item: any) => {
           formattedHistory.push({
@@ -176,7 +202,7 @@ const DataAcquisitionPage: React.FC = () => {
         });
       }
 
-      // 6. 화학물질 데이터 포맷팅
+      // 7. 화학물질 데이터 포맷팅
       if (chemicalsData) {
         chemicalsData.forEach((item: any) => {
           formattedHistory.push({
@@ -194,12 +220,12 @@ const DataAcquisitionPage: React.FC = () => {
         });
       }
 
-      // 7. 날짜순 정렬
+      // 8. 날짜순 정렬 및 페이지 크기만큼 제한
       formattedHistory.sort((a, b) => 
         new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
       );
 
-      setRecentUploads(formattedHistory.slice(0, 15));
+      setRecentUploads(formattedHistory.slice(0, size));
       
     } catch (error) {
       console.error('업로드 이력 로딩 에러:', error);
@@ -214,18 +240,37 @@ const DataAcquisitionPage: React.FC = () => {
     const initializeData = async () => {
       await Promise.all([
         fetchStats(),
-        fetchUploadHistory()
+        fetchUploadHistory(currentPage, pageSize)
       ]);
     };
     
     initializeData();
-  }, []);
+  }, [currentPage, pageSize]);
   
   // 업로드 완료 후 콜백 함수 (통계와 이력 모두 새로고침)
   const handleUploadComplete = async () => {
     await Promise.all([
       fetchStats(),
-      fetchUploadHistory()
+      fetchUploadHistory(currentPage, pageSize)
+    ]);
+  };
+  
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  // 페이지 크기 변경 핸들러
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // 페이지 크기 변경 시 첫 페이지로 이동
+  };
+  
+  // 데이터 새로고침 핸들러
+  const handleRefresh = async () => {
+    await Promise.all([
+      fetchStats(),
+      fetchUploadHistory(currentPage, pageSize)
     ]);
   };
 
@@ -310,7 +355,7 @@ const DataAcquisitionPage: React.FC = () => {
       // 6. 통계 및 업로드 이력 새로고침
       await Promise.all([
         fetchStats(),
-        fetchUploadHistory()
+        fetchUploadHistory(currentPage, pageSize)
       ]);
       
     } catch (error) {
@@ -378,7 +423,12 @@ const DataAcquisitionPage: React.FC = () => {
         <UploadHistoryTable 
           uploads={recentUploads}
           loading={loading}
-          onRefresh={fetchUploadHistory}
+          onRefresh={handleRefresh}
+          totalCount={totalCount}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
       </div>
       

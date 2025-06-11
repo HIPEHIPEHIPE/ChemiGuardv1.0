@@ -1,20 +1,16 @@
-import React, { CSSProperties } from 'react';
+// src/components/DataRefining/DataComparison.tsx - Excel Style Version
+import React from 'react';
+import ExcelStyleDataGrid from './ExcelStyleDataGrid';
+import { ProductWithIngredients } from '../../api/dataRefinement';
 
-const sectionCardStyle: CSSProperties = {
-  background: 'white',
-  borderRadius: '12px',
-  boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-  marginBottom: '20px',
-};
+interface DataComparisonProps {
+  products?: ProductWithIngredients[];
+  onRefresh?: () => void;
+}
 
-const DataComparison: React.FC = () => {
+const DataComparison: React.FC<DataComparisonProps> = ({ products, onRefresh }) => {
   return (
-    <div style={sectionCardStyle}>
-      <div style={{padding: '20px'}}>
-        <h3>데이터 검수</h3>
-        <p>데이터 검수 및 비교 기능이 구현될 예정입니다.</p>
-      </div>
-    </div>
+    <ExcelStyleDataGrid onRefresh={onRefresh} />
   );
 };
 

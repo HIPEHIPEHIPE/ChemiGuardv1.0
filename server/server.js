@@ -85,64 +85,36 @@ app.post('/api/gemini/extract-msds', async (req, res) => {
       });
     }
 
-    const prompt = `다음은 MSDS(Material Safety Data Sheet) PDF 문서입니다. 이 문서에서 화학물질 정보를 추출하여 JSON 형식으로 반환해주세요.
+    const prompt = `이 MSDS PDF 문서를 분석하여 다음 JSON 형식으로 정보를 추출해주세요.
 
-추출해야 할 정보:
-1. 화학제품과 회사에 관한 정보
-   - 제품명 (productName)
-   - 회사명 (manufacturer)
-   - 긴급연락처 (emergencyContact)
-   - 제품의 권고용도 (recommendedUse)
-   - 사용상의 제한 (restrictions)
+중요: 제품 정보와 화학물질 성분 정보를 명확히 구분해서 추출하세요.
 
-2. 유해성·위험성
-   - GHS 분류 (ghs_classification)
-   - 그림문자 (pictograms)
-   - 신호어 (signalWord)
-   - 유해·위험 문구 (hazardStatements)
-   - 예방조치문구 (precautionaryStatements)
-   - NFPA 등급 (nfpaRatings: health, fire, reactivity)
+제품 정보(productInfo):
+- productName: 전체 제품의 이름 (예: "BIO 707 백색")
+- manufacturer: 제조회사 이름
+- emergencyContact: 긴급연락처
+- recommendedUse: 제품 사용 용도
+- restrictions: 사용상 제한사항
 
-3. 구성성분의 명칭 및 함유량
-   - 배열 형태로 각 성분에 대해:
-     - 물질명 (substanceName)
-     - 이명 (synonym)
-     - CAS 번호 (casNumber)
-     - 함유량 (percentage)
+구성성분(composition):
+- 제품에 포함된 각 화학물질들의 목록
+- 각 화학물질마다 별도 객체로 생성
 
-4. 응급조치요령
-   - 눈에 들어갔을 때 (eyeContact)
-   - 피부에 접촉했을 때 (skinContact)
-   - 흡입했을 때 (inhalation)
-   - 먹었을 때 (ingestion)
-   - 의사의 주의사항 (medicalAttention)
-
-5. 물리화학적 특성
-   - 외관 (appearance)
-   - 냄새 (odor)
-   - pH (ph)
-   - 녹는점/어는점 (meltingPoint)
-   - 초기 끓는점 (boilingPoint)
-   - 인화점 (flashPoint)
-   - 비중 (density)
-   - 증기압 (vaporPressure)
-   - 용해도 (solubility)
-
-응답은 반드시 다음 JSON 형식으로 작성해주세요:
+응답 형식:
 {
   "productInfo": {
-    "productName": "...",
-    "manufacturer": "...",
-    "emergencyContact": "...",
-    "recommendedUse": "...",
-    "restrictions": "..."
+    "productName": "제품명 (화학물질명이 아님)",
+    "manufacturer": "제조사명",
+    "emergencyContact": "연락처",
+    "recommendedUse": "사용용도",
+    "restrictions": "제한사항"
   },
   "hazardInfo": {
-    "ghs_classification": "...",
-    "pictograms": ["...", "..."],
-    "signalWord": "...",
-    "hazardStatements": ["...", "..."],
-    "precautionaryStatements": ["...", "..."],
+    "ghs_classification": "GHS 분류",
+    "pictograms": ["그림문자"],
+    "signalWord": "신호어",
+    "hazardStatements": ["유해위험문구"],
+    "precautionaryStatements": ["예방조치문구"],
     "nfpaRatings": {
       "health": 0,
       "fire": 0,
@@ -151,29 +123,35 @@ app.post('/api/gemini/extract-msds', async (req, res) => {
   },
   "composition": [
     {
-      "substanceName": "...",
-      "synonym": "...",
-      "casNumber": "...",
-      "percentage": "..."
+      "substanceName": "화학물질명1",
+      "synonym": "이명",
+      "casNumber": "CAS번호",
+      "percentage": "함유량"
+    },
+    {
+      "substanceName": "화학물질명2",
+      "synonym": "이명",
+      "casNumber": "CAS번호",
+      "percentage": "함유량"
     }
   ],
   "firstAid": {
-    "eyeContact": "...",
-    "skinContact": "...",
-    "inhalation": "...",
-    "ingestion": "...",
-    "medicalAttention": "..."
+    "eyeContact": "눈 접촉시 응급조치",
+    "skinContact": "피부 접촉시 응급조치",
+    "inhalation": "흡입시 응급조치",
+    "ingestion": "섭취시 응급조치",
+    "medicalAttention": "의료진 주의사항"
   },
   "physicalProperties": {
-    "appearance": "...",
-    "odor": "...",
-    "ph": "...",
-    "meltingPoint": "...",
-    "boilingPoint": "...",
-    "flashPoint": "...",
-    "density": "...",
-    "vaporPressure": "...",
-    "solubility": "..."
+    "appearance": "외관",
+    "odor": "냄새",
+    "ph": "pH",
+    "meltingPoint": "녹는점",
+    "boilingPoint": "끓는점",
+    "flashPoint": "인화점",
+    "density": "밀도",
+    "vaporPressure": "증기압",
+    "solubility": "용해도"
   }
 }
 
