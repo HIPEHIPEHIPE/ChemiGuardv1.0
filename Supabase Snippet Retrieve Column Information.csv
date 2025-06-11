@@ -1,0 +1,326 @@
+table_name,column_name,data_type,is_nullable,column_default
+ai_training_data,id,uuid,NO,gen_random_uuid()
+ai_training_data,data_id,character varying,NO,null
+ai_training_data,product_id,character varying,YES,null
+ai_training_data,ingredient_id,character varying,YES,null
+ai_training_data,data_version,character varying,YES,'1.0'::character varying
+ai_training_data,caption_type,character varying,YES,null
+ai_training_data,caption,text,NO,null
+ai_training_data,caption_created_by,character varying,YES,null
+ai_training_data,caption_created_method,character varying,YES,null
+ai_training_data,status,character varying,YES,'draft'::character varying
+ai_training_data,review_status,character varying,YES,null
+ai_training_data,review_feedback,text,YES,null
+ai_training_data,gemini_prompt,text,YES,null
+ai_training_data,gemini_response_raw,text,YES,null
+ai_training_data,created_date,timestamp with time zone,YES,CURRENT_TIMESTAMP
+ai_training_data,modified_date,timestamp with time zone,YES,CURRENT_TIMESTAMP
+ai_training_data,created_by,uuid,YES,null
+ai_training_data,reviewed_by,uuid,YES,null
+chemical_descriptions,id,uuid,NO,gen_random_uuid()
+chemical_descriptions,chemical_id,character varying,YES,null
+chemical_descriptions,description_type,character varying,YES,null
+chemical_descriptions,description,text,NO,null
+chemical_descriptions,target_audience,character varying,YES,null
+chemical_descriptions,language_code,character varying,YES,'ko'::character varying
+chemical_descriptions,generated_by,character varying,YES,null
+chemical_descriptions,quality_score,numeric,YES,null
+chemical_descriptions,status,character varying,YES,'draft'::character varying
+chemical_descriptions,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemical_descriptions,reviewed_at,timestamp with time zone,YES,null
+chemical_descriptions,reviewed_by,uuid,YES,null
+chemical_ghs_info,id,uuid,NO,gen_random_uuid()
+chemical_ghs_info,chemical_id,character varying,YES,null
+chemical_ghs_info,ghs_code,character varying,NO,null
+chemical_ghs_info,hazard_class,character varying,YES,null
+chemical_ghs_info,hazard_category,character varying,YES,null
+chemical_ghs_info,signal_word,character varying,YES,null
+chemical_ghs_info,hazard_statement,text,YES,null
+chemical_ghs_info,hazard_statement_code,character varying,YES,null
+chemical_ghs_info,precautionary_statement,text,YES,null
+chemical_ghs_info,precautionary_statement_code,character varying,YES,null
+chemical_ghs_info,ghs_pictogram,character varying,YES,null
+chemical_ghs_info,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemical_ghs_info,created_by,uuid,YES,null
+chemical_qa_pairs,id,uuid,NO,gen_random_uuid()
+chemical_qa_pairs,chemical_id,character varying,YES,null
+chemical_qa_pairs,description_id,uuid,YES,null
+chemical_qa_pairs,qa_user_type,character varying,YES,null
+chemical_qa_pairs,qa_type,character varying,YES,null
+chemical_qa_pairs,question,text,NO,null
+chemical_qa_pairs,answer,text,NO,null
+chemical_qa_pairs,sequence_order,integer,YES,0
+chemical_qa_pairs,confidence_score,numeric,YES,null
+chemical_qa_pairs,generated_by,character varying,YES,null
+chemical_qa_pairs,validation_status,character varying,YES,'pending'::character varying
+chemical_qa_pairs,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemical_qa_pairs,validated_at,timestamp with time zone,YES,null
+chemical_qa_pairs,validated_by,uuid,YES,null
+chemical_regulations,id,uuid,NO,gen_random_uuid()
+chemical_regulations,chemical_id,character varying,YES,null
+chemical_regulations,regulation_type,character varying,YES,null
+chemical_regulations,regulation_status,character varying,YES,null
+chemical_regulations,restriction_info,text,YES,null
+chemical_regulations,registration_number,character varying,YES,null
+chemical_regulations,effective_date,date,YES,null
+chemical_regulations,restriction_limit,character varying,YES,null
+chemical_regulations,country_code,character varying,YES,null
+chemical_regulations,regulatory_body,character varying,YES,null
+chemical_regulations,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemical_synonyms,id,uuid,NO,gen_random_uuid()
+chemical_synonyms,chemical_id,character varying,YES,null
+chemical_synonyms,synonym_name,character varying,NO,null
+chemical_synonyms,synonym_type,character varying,YES,null
+chemical_synonyms,language_code,character varying,YES,'ko'::character varying
+chemical_synonyms,is_primary,boolean,YES,false
+chemical_synonyms,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemical_toxicity,id,uuid,NO,gen_random_uuid()
+chemical_toxicity,chemical_id,character varying,YES,null
+chemical_toxicity,toxicity_type,character varying,YES,null
+chemical_toxicity,toxicity_category,character varying,YES,null
+chemical_toxicity,exposure_route,character varying,YES,null
+chemical_toxicity,test_species,character varying,YES,null
+chemical_toxicity,test_value,character varying,YES,null
+chemical_toxicity,test_unit,character varying,YES,null
+chemical_toxicity,health_effects,text,YES,null
+chemical_toxicity,symptoms,text,YES,null
+chemical_toxicity,first_aid_measures,text,YES,null
+chemical_toxicity,chronic_effects,text,YES,null
+chemical_toxicity,target_organs,text,YES,null
+chemical_toxicity,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemical_toxicity,data_source,character varying,YES,null
+chemical_toxicity,reliability_score,numeric,YES,null
+chemical_uses,id,uuid,NO,gen_random_uuid()
+chemical_uses,chemical_id,character varying,YES,null
+chemical_uses,use_category,character varying,YES,null
+chemical_uses,specific_use,character varying,YES,null
+chemical_uses,use_description,text,YES,null
+chemical_uses,concentration_range,character varying,YES,null
+chemical_uses,frequency_of_use,character varying,YES,null
+chemical_uses,exposure_potential,character varying,YES,null
+chemical_uses,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemicals,id,uuid,NO,gen_random_uuid()
+chemicals,chemical_id,character varying,NO,null
+chemicals,chemical_name_ko,character varying,NO,null
+chemicals,chemical_name_en,character varying,YES,null
+chemicals,cas_no,character varying,YES,null
+chemicals,chemical_formula,character varying,YES,null
+chemicals,molecular_weight,numeric,YES,null
+chemicals,iupac_name,text,YES,null
+chemicals,smiles,text,YES,null
+chemicals,physical_state,character varying,YES,null
+chemicals,melting_point,character varying,YES,null
+chemicals,boiling_point,character varying,YES,null
+chemicals,density,character varying,YES,null
+chemicals,solubility,text,YES,null
+chemicals,ph_value,character varying,YES,null
+chemicals,vapor_pressure,character varying,YES,null
+chemicals,flash_point,character varying,YES,null
+chemicals,autoignition_temp,character varying,YES,null
+chemicals,collected_date,date,YES,null
+chemicals,collected_source,character varying,YES,null
+chemicals,collected_method,character varying,YES,null
+chemicals,source_reference,character varying,YES,null
+chemicals,data_quality_score,numeric,YES,null
+chemicals,verification_status,character varying,YES,'pending'::character varying
+chemicals,status,character varying,YES,'collected'::character varying
+chemicals,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemicals,updated_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+chemicals,created_by,uuid,YES,null
+chemicals,updated_by,uuid,YES,null
+chemicals,raw_data,jsonb,YES,null
+ghs_classifications,id,uuid,NO,gen_random_uuid()
+ghs_classifications,ingredient_id,character varying,YES,null
+ghs_classifications,ghs_code,character varying,NO,null
+ghs_classifications,hazard_class,character varying,YES,null
+ghs_classifications,hazard_category,character varying,YES,null
+ghs_classifications,signal_word,character varying,YES,null
+ghs_classifications,hazard_statement,text,YES,null
+ghs_classifications,hazard_statement_code,character varying,YES,null
+ghs_classifications,precautionary_statement,text,YES,null
+ghs_classifications,precautionary_statement_code,character varying,YES,null
+ghs_classifications,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+ghs_classifications,created_by,uuid,YES,null
+metadata,id,uuid,NO,gen_random_uuid()
+metadata,data_type,character varying,YES,null
+metadata,reference_id,character varying,YES,null
+metadata,meta_key,character varying,YES,null
+metadata,meta_value,text,YES,null
+metadata,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+msds_documents,id,uuid,NO,gen_random_uuid()
+msds_documents,product_id,character varying,YES,null
+msds_documents,file_name,character varying,YES,null
+msds_documents,file_url,text,YES,null
+msds_documents,file_size,integer,YES,null
+msds_documents,extracted_data,jsonb,YES,null
+msds_documents,extraction_status,character varying,YES,null
+msds_documents,extraction_error,text,YES,null
+msds_documents,gemini_model_used,character varying,YES,null
+msds_documents,gemini_prompt_used,text,YES,null
+msds_documents,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+msds_documents,created_by,uuid,YES,null
+product_categories,id,integer,NO,nextval('product_categories_id_seq'::regclass)
+product_categories,category_code,character varying,NO,null
+product_categories,category_name,character varying,NO,null
+product_categories,target_percentage,numeric,YES,null
+product_ingredients,id,uuid,NO,gen_random_uuid()
+product_ingredients,product_id,character varying,YES,null
+product_ingredients,ingredient_id,character varying,NO,null
+product_ingredients,main_ingredient,character varying,NO,null
+product_ingredients,cas_number,character varying,YES,null
+product_ingredients,chemical_formula,character varying,YES,null
+product_ingredients,molecular_weight,numeric,YES,null
+product_ingredients,iupac_name,text,YES,null
+product_ingredients,smiles_code,text,YES,null
+product_ingredients,content_percentage,numeric,YES,null
+product_ingredients,status,character varying,YES,'collected'::character varying
+product_ingredients,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+product_ingredients,created_by,uuid,YES,null
+product_ingredients,updated_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+product_ingredients,updated_by,uuid,YES,null
+products,id,uuid,NO,gen_random_uuid()
+products,product_id,character varying,NO,null
+products,product_name,character varying,NO,null
+products,product_name_anonymized,character varying,YES,null
+products,product_category,character varying,YES,null
+products,product_subcategory,character varying,YES,null
+products,manufacturer,character varying,YES,null
+products,manufacturer_anonymized,character varying,YES,null
+products,country_of_origin,character varying,YES,null
+products,usage_purpose,text,YES,null
+products,collected_date,date,YES,null
+products,collected_source,character varying,YES,null
+products,collected_method,character varying,YES,null
+products,source_reference,character varying,YES,null
+products,status,character varying,YES,'collected'::character varying
+products,assigned_to,uuid,YES,null
+products,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+products,updated_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+products,created_by,uuid,YES,null
+products,updated_by,uuid,YES,null
+projects,id,uuid,NO,gen_random_uuid()
+projects,project_name,character varying,NO,null
+projects,description,text,YES,null
+projects,target_count,integer,YES,null
+projects,start_date,date,YES,null
+projects,end_date,date,YES,null
+projects,status,character varying,YES,'active'::character varying
+projects,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+projects,created_by,uuid,YES,null
+qa_pairs,id,uuid,NO,gen_random_uuid()
+qa_pairs,training_data_id,uuid,YES,null
+qa_pairs,qa_user_type,character varying,YES,null
+qa_pairs,qa_type,character varying,YES,null
+qa_pairs,question,text,NO,null
+qa_pairs,answer,text,NO,null
+qa_pairs,sequence_order,integer,YES,0
+qa_pairs,qa_created_by,character varying,YES,null
+qa_pairs,qa_created_method,character varying,YES,null
+qa_pairs,gemini_prompt,text,YES,null
+qa_pairs,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+qa_pairs,created_by,uuid,YES,null
+quality_checks,id,uuid,NO,gen_random_uuid()
+quality_checks,training_data_id,uuid,YES,null
+quality_checks,check_type,character varying,YES,null
+quality_checks,check_result,boolean,YES,null
+quality_checks,error_details,jsonb,YES,null
+quality_checks,checked_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+quality_checks,checked_by,uuid,YES,null
+review_feedback,id,uuid,NO,gen_random_uuid()
+review_feedback,training_data_id,uuid,YES,null
+review_feedback,reviewer_id,uuid,NO,null
+review_feedback,feedback_type,character varying,YES,null
+review_feedback,feedback_text,text,YES,null
+review_feedback,severity,character varying,YES,null
+review_feedback,status,character varying,YES,'open'::character varying
+review_feedback,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+review_feedback,resolved_at,timestamp with time zone,YES,null
+review_feedback,resolved_by,uuid,YES,null
+toxicity_info,id,uuid,NO,gen_random_uuid()
+toxicity_info,ingredient_id,character varying,YES,null
+toxicity_info,toxicity_type,character varying,YES,null
+toxicity_info,toxicity_value,character varying,YES,null
+toxicity_info,exposure_route,character varying,YES,null
+toxicity_info,test_species,character varying,YES,null
+toxicity_info,health_effects,text,YES,null
+toxicity_info,first_aid_measures,text,YES,null
+toxicity_info,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+v_ai_training_complete,training_id,uuid,YES,null
+v_ai_training_complete,data_id,character varying,YES,null
+v_ai_training_complete,caption_type,character varying,YES,null
+v_ai_training_complete,caption,text,YES,null
+v_ai_training_complete,product_id,character varying,YES,null
+v_ai_training_complete,product_name,character varying,YES,null
+v_ai_training_complete,product_category,character varying,YES,null
+v_ai_training_complete,main_ingredient,character varying,YES,null
+v_ai_training_complete,cas_number,character varying,YES,null
+v_ai_training_complete,qa_pairs,json,YES,null
+v_chemical_complete_info,chemical_id,character varying,YES,null
+v_chemical_complete_info,chemical_name_ko,character varying,YES,null
+v_chemical_complete_info,chemical_name_en,character varying,YES,null
+v_chemical_complete_info,cas_no,character varying,YES,null
+v_chemical_complete_info,chemical_formula,character varying,YES,null
+v_chemical_complete_info,smiles,text,YES,null
+v_chemical_complete_info,ghs_code,character varying,YES,null
+v_chemical_complete_info,hazard_class,character varying,YES,null
+v_chemical_complete_info,signal_word,character varying,YES,null
+v_chemical_complete_info,hazard_statement,text,YES,null
+v_chemical_complete_info,precautionary_statement,text,YES,null
+v_chemical_complete_info,toxicity_type,character varying,YES,null
+v_chemical_complete_info,exposure_route,character varying,YES,null
+v_chemical_complete_info,health_effects,text,YES,null
+v_chemical_complete_info,first_aid_measures,text,YES,null
+v_chemical_complete_info,description,text,YES,null
+v_chemical_complete_info,description_type,character varying,YES,null
+v_chemical_complete_info,target_audience,character varying,YES,null
+v_chemical_complete_info,qa_pairs,json,YES,null
+v_chemical_stats,total_chemicals,bigint,YES,null
+v_chemical_stats,verified_count,bigint,YES,null
+v_chemical_stats,with_cas_count,bigint,YES,null
+v_chemical_stats,with_smiles_count,bigint,YES,null
+v_chemical_stats,data_sources_count,bigint,YES,null
+v_daily_work_stats,work_date,date,YES,null
+v_daily_work_stats,worker_id,uuid,YES,null
+v_daily_work_stats,work_type,character varying,YES,null
+v_daily_work_stats,work_count,bigint,YES,null
+v_product_category_stats,product_category,character varying,YES,null
+v_product_category_stats,total_count,bigint,YES,null
+v_product_category_stats,percentage,numeric,YES,null
+v_product_category_stats,approved_count,bigint,YES,null
+v_product_category_stats,reviewed_count,bigint,YES,null
+v_product_category_stats,annotated_count,bigint,YES,null
+v_training_data_stats,caption_type,character varying,YES,null
+v_training_data_stats,total_count,bigint,YES,null
+v_training_data_stats,approved_count,bigint,YES,null
+v_training_data_stats,unique_products,bigint,YES,null
+v_training_data_stats,avg_qa_pairs_per_caption,numeric,YES,null
+work_assignments,id,uuid,NO,gen_random_uuid()
+work_assignments,project_id,uuid,YES,null
+work_assignments,assigned_to,uuid,NO,null
+work_assignments,work_type,character varying,YES,null
+work_assignments,target_count,integer,YES,null
+work_assignments,completed_count,integer,YES,0
+work_assignments,status,character varying,YES,'assigned'::character varying
+work_assignments,due_date,date,YES,null
+work_assignments,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+work_assignments,created_by,uuid,YES,null
+work_logs,id,uuid,NO,gen_random_uuid()
+work_logs,worker_id,uuid,NO,null
+work_logs,work_type,character varying,YES,null
+work_logs,target_type,character varying,YES,null
+work_logs,target_id,uuid,YES,null
+work_logs,action,character varying,YES,null
+work_logs,details,jsonb,YES,null
+work_logs,created_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+worker_roles,id,uuid,NO,gen_random_uuid()
+worker_roles,worker_id,uuid,NO,null
+worker_roles,role_type,character varying,NO,null
+worker_roles,permissions,jsonb,YES,null
+worker_roles,assigned_at,timestamp with time zone,YES,CURRENT_TIMESTAMP
+worker_roles,assigned_by,uuid,YES,null
+workers,id,uuid,NO,null
+workers,email,text,NO,null
+workers,name,text,YES,null
+workers,organization,text,YES,null
+workers,created_at,timestamp with time zone,YES,now()
+workers,role,text,YES,'user'::text

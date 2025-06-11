@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 정제 테스트 도구</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .result-box {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .log-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .log-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .log-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .issue-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .issue-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .issue-error {
+            border-left: 4px solid #dc3545;
+        }
+        .issue-warning {
+            border-left: 4px solid #ffc107;
+        }
+        .issue-suggestion {
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 데이터 정제 테스트 도구</h1>
+    
+    <div class="container">
+        <h2>📊 데이터 현황 테스트</h2>
+        <button class="btn" onclick="testDataStatus()">데이터 현황 확인</button>
+        <button class="btn btn-success" onclick="testIssueDetection()">이슈 탐지 테스트</button>
+        <button class="btn btn-warning" onclick="testWithMockData()">모의 데이터로 테스트</button>
+        <button class="btn btn-danger" onclick="clearLogs()">로그 지우기</button>
+        
+        <div id="logs" class="result-box">
+            <div class="log-entry log-info">테스트 도구가 준비되었습니다. 버튼을 클릭해서 테스트를 시작하세요.</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📈 통계 결과</h2>
+        <div id="stats-display" class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-products">-</div>
+                <div class="stat-label">총 제품</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-ingredients">-</div>
+                <div class="stat-label">총 성분</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="error-count">-</div>
+                <div class="stat-label">오류 제품</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="warning-count">-</div>
+                <div class="stat-label">경고 제품</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="suggestion-count">-</div>
+                <div class="stat-label">검토필요 제품</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completed-count">-</div>
+                <div class="stat-label">정상완료 제품</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🐛 감지된 이슈</h2>
+        <div id="issues-display" class="issue-list">
+            <div class="log-entry log-info">이슈가 감지되면 여기에 표시됩니다.</div>
+        </div>
+    </div>
+
+    <script>
+        // 로그 출력 함수
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `${new Date().toLocaleTimeString()} - ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            addLog('로그가 지워졌습니다.');
+        }
+
+        // 통계 업데이트 함수
+        function updateStats(stats) {
+            document.getElementById('total-products').textContent = stats.total_products || 0;
+            document.getElementById('total-ingredients').textContent = stats.total_ingredients || 0;
+            document.getElementById('error-count').textContent = stats.error_count || 0;
+            document.getElementById('warning-count').textContent = stats.warning_count || 0;
+            document.getElementById('suggestion-count').textContent = stats.suggestion_count || 0;
+            document.getElementById('completed-count').textContent = stats.completed_count || 0;
+        }
+
+        // 이슈 표시 함수
+        function displayIssues(issues) {
+            const issuesContainer = document.getElementById('issues-display');
+            issuesContainer.innerHTML = '';
+            
+            if (issues.length === 0) {
+                issuesContainer.innerHTML = '<div class="log-entry log-success">감지된 이슈가 없습니다! 🎉</div>';
+                return;
+            }
+
+            issues.forEach((issue, index) => {
+                const issueElement = document.createElement('div');
+                issueElement.className = `issue-item issue-${issue.type}`;
+                issueElement.innerHTML = `
+                    <div><strong>${issue.type.toUpperCase()}: ${issue.title}</strong></div>
+                    <div>제품: ${issue.productName || 'N/A'}</div>
+                    <div>성분: ${issue.ingredientName || 'N/A'}</div>
+                    <div>설명: ${issue.description}</div>
+                    ${issue.suggested_value ? `<div>제안값: ${issue.original_value} → ${issue.suggested_value}</div>` : ''}
+                    <div>자동수정: ${issue.auto_fixable ? '가능' : '불가능'}</div>
+                `;
+                issuesContainer.appendChild(issueElement);
+            });
+        }
+
+        // 모의 데이터 생성
+        function createMockData() {
+            return [
+                {
+                    product_id: 'mock-1',
+                    product_name: '테스트 세제',
+                    product_category: '세제',
+                    status: 'collected',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    ingredients: [
+                        {
+                            ingredient_id: 'mock-ing-1',
+                            main_ingredient: '잘못된 성분명',
+                            cas_number: '1234567',
+                            content_percentage: 105,
+                            status: 'collected'
+                        },
+                        {
+                            ingredient_id: 'mock-ing-2',
+                            main_ingredient: '에탄올',
+                            cas_number: '64-17-5',
+                            content_percentage: -5,
+                            status: 'collected'
+                        },
+                        {
+                            ingredient_id: 'mock-ing-3',
+                            main_ingredient: '',
+                            cas_number: '',
+                            content_percentage: null,
+                            status: 'collected'
+                        }
+                    ]
+                },
+                {
+                    product_id: 'mock-2',
+                    product_name: '정상 제품',
+                    product_category: '세제',
+                    status: 'collected',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    ingredients: [
+                        {
+                            ingredient_id: 'mock-ing-4',
+                            main_ingredient: '소듐라우릴황산염',
+                            cas_number: '151-21-3',
+                            content_percentage: 15.5,
+                            status: 'collected'
+                        }
+                    ]
+                }
+            ];
+        }
+
+        // CAS 번호 검증 함수 (클라이언트 사이드)
+        function validateCASNumber(casNumber) {
+            if (!casNumber || casNumber.trim() === '') return { isValid: false };
+            
+            const cleaned = casNumber.trim();
+            const casRegex = /^\\d{2,7}-\\d{2}-\\d$/;
+            
+            if (!casRegex.test(cleaned)) {
+                if (/^\\d+$/.test(cleaned) && cleaned.length >= 5) {
+                    const digits = cleaned;
+                    if (digits.length === 7) {
+                        const suggested = \`\${digits.slice(0, 3)}-\${digits.slice(3, 5)}-\${digits.slice(5)}\`;
+                        return { isValid: false, suggestion: suggested };
+                    }
+                }
+                return { isValid: false };
+            }
+            return { isValid: true };
+        }
+
+        // 이슈 탐지 함수 (클라이언트 사이드)
+        function detectIngredientIssues(ingredient) {
+            const issues = [];
+
+            // CAS 번호 검증
+            if (ingredient.cas_number) {
+                const casValidation = validateCASNumber(ingredient.cas_number);
+                if (!casValidation.isValid) {
+                    issues.push({
+                        id: \`cas-\${ingredient.ingredient_id}\`,
+                        type: casValidation.suggestion ? 'error' : 'warning',
+                        title: 'CAS 번호 형식 오류',
+                        description: \`CAS 번호 "\${ingredient.cas_number}"의 형식이 올바르지 않습니다.\`,
+                        field: 'cas_number',
+                        original_value: ingredient.cas_number,
+                        suggested_value: casValidation.suggestion,
+                        auto_fixable: !!casValidation.suggestion,
+                        ingredientId: ingredient.ingredient_id
+                    });
+                }
+            } else {
+                issues.push({
+                    id: \`cas-missing-\${ingredient.ingredient_id}\`,
+                    type: 'warning',
+                    title: 'CAS 번호 누락',
+                    description: \`성분 "\${ingredient.main_ingredient}"의 CAS 번호가 누락되었습니다.\`,
+                    field: 'cas_number',
+                    original_value: '',
+                    auto_fixable: false,
+                    ingredientId: ingredient.ingredient_id
+                });
+            }
+
+            // 성분명 검증
+            if (!ingredient.main_ingredient || ingredient.main_ingredient.trim() === '') {
+                issues.push({
+                    id: \`name-empty-\${ingredient.ingredient_id}\`,
+                    type: 'error',
+                    title: '성분명 누락',
+                    description: '성분명이 비어있습니다.',
+                    field: 'main_ingredient',
+                    original_value: ingredient.main_ingredient || '',
+                    auto_fixable: false,
+                    ingredientId: ingredient.ingredient_id
+                });
+            } else if (ingredient.main_ingredient.includes('잘못된')) {
+                issues.push({
+                    id: \`name-invalid-\${ingredient.ingredient_id}\`,
+                    type: 'error',
+                    title: '잘못된 성분명',
+                    description: '성분명에 "잘못된"이라는 표현이 포함되어 있습니다.',
+                    field: 'main_ingredient',
+                    original_value: ingredient.main_ingredient,
+                    auto_fixable: false,
+                    ingredientId: ingredient.ingredient_id
+                });
+            }
+
+            // 함량 검증
+            if (ingredient.content_percentage !== null && ingredient.content_percentage !== undefined) {
+                const percentage = ingredient.content_percentage;
+                if (percentage < 0) {
+                    issues.push({
+                        id: \`percentage-negative-\${ingredient.ingredient_id}\`,
+                        type: 'error',
+                        title: '함량 음수 오류',
+                        description: '함량이 음수입니다.',
+                        field: 'content_percentage',
+                        original_value: percentage.toString(),
+                        suggested_value: Math.abs(percentage).toString(),
+                        auto_fixable: true,
+                        ingredientId: ingredient.ingredient_id
+                    });
+                } else if (percentage > 100) {
+                    issues.push({
+                        id: \`percentage-over100-\${ingredient.ingredient_id}\`,
+                        type: 'error',
+                        title: '함량 100% 초과',
+                        description: '함량이 100%를 초과합니다.',
+                        field: 'content_percentage',
+                        original_value: percentage.toString(),
+                        auto_fixable: false,
+                        ingredientId: ingredient.ingredient_id
+                    });
+                }
+            } else {
+                issues.push({
+                    id: \`percentage-missing-\${ingredient.ingredient_id}\`,
+                    type: 'suggestion',
+                    title: '함량 정보 누락',
+                    description: '함량 정보가 누락되었습니다.',
+                    field: 'content_percentage',
+                    original_value: '',
+                    auto_fixable: false,
+                    ingredientId: ingredient.ingredient_id
+                });
+            }
+
+            return issues;
+        }
+
+        // 제품 상태 결정 함수
+        function determineProductStatus(product) {
+            const allIssues = product.ingredients.flatMap(ingredient => ingredient.issues || []);
+            
+            if (allIssues.length === 0) {
+                return { status: 'completed', issueCount: 0 };
+            }
+            
+            const hasErrors = allIssues.some(issue => issue.type === 'error');
+            const hasWarnings = allIssues.some(issue => issue.type === 'warning');
+            
+            if (hasErrors) {
+                return { status: 'error', issueCount: allIssues.length };
+            } else if (hasWarnings) {
+                return { status: 'warning', issueCount: allIssues.length };
+            } else {
+                return { status: 'suggestion', issueCount: allIssues.length };
+            }
+        }
+
+        // 데이터 현황 테스트
+        async function testDataStatus() {
+            addLog('데이터 현황 테스트를 시작합니다...');
+            
+            try {
+                // 실제 데이터베이스 테스트 (가능한 경우)
+                addLog('실제 데이터베이스 연결을 시도합니다...');
+                
+                // 여기서는 모의 데이터로 테스트
+                const mockProducts = createMockData();
+                addLog(\`모의 데이터 생성 완료: \${mockProducts.length}개 제품\`, 'success');
+                
+                // 이슈 탐지
+                const productsWithIssues = mockProducts.map(product => ({
+                    ...product,
+                    ingredients: product.ingredients.map(ingredient => ({
+                        ...ingredient,
+                        issues: detectIngredientIssues(ingredient)
+                    }))
+                }));
+                
+                // 통계 계산
+                let errorProducts = 0;
+                let warningProducts = 0;
+                let suggestionProducts = 0;
+                let completedProducts = 0;
+                let totalIngredients = 0;
+                
+                productsWithIssues.forEach(product => {
+                    const { status } = determineProductStatus(product);
+                    totalIngredients += product.ingredients.length;
+                    
+                    switch (status) {
+                        case 'error': errorProducts++; break;
+                        case 'warning': warningProducts++; break;
+                        case 'suggestion': suggestionProducts++; break;
+                        case 'completed': completedProducts++; break;
+                    }
+                });
+                
+                const stats = {
+                    total_products: productsWithIssues.length,
+                    total_ingredients: totalIngredients,
+                    error_count: errorProducts,
+                    warning_count: warningProducts,
+                    suggestion_count: suggestionProducts,
+                    completed_count: completedProducts
+                };
+                
+                updateStats(stats);
+                addLog(\`통계 계산 완료: 총 제품 \${stats.total_products}개, 오류 \${stats.error_count}개, 경고 \${stats.warning_count}개, 정상 \${stats.completed_count}개\`, 'success');
+                
+                // 이슈 표시
+                const allIssues = productsWithIssues.flatMap(product => 
+                    product.ingredients.flatMap(ingredient => 
+                        (ingredient.issues || []).map(issue => ({
+                            ...issue,
+                            productName: product.product_name,
+                            ingredientName: ingredient.main_ingredient
+                        }))
+                    )
+                );
+                
+                displayIssues(allIssues);
+                addLog(\`이슈 탐지 완료: 총 \${allIssues.length}건의 이슈 발견\`, allIssues.length > 0 ? 'warning' : 'success');
+                
+            } catch (error) {
+                addLog(\`오류 발생: \${error.message}\`, 'error');
+            }
+        }
+
+        // 이슈 탐지 테스트
+        function testIssueDetection() {
+            addLog('이슈 탐지 테스트를 시작합니다...');
+            
+            const testCases = [
+                {
+                    name: '정상 성분',
+                    ingredient: {
+                        ingredient_id: 'test-1',
+                        main_ingredient: '소듐라우릴황산염',
+                        cas_number: '151-21-3',
+                        content_percentage: 15.5,
+                        status: 'collected'
+                    }
+                },
+                {
+                    name: '잘못된 CAS 번호',
+                    ingredient: {
+                        ingredient_id: 'test-2',
+                        main_ingredient: '에탄올',
+                        cas_number: '1234567',
+                        content_percentage: 10,
+                        status: 'collected'
+                    }
+                },
+                {
+                    name: '음수 함량',
+                    ingredient: {
+                        ingredient_id: 'test-3',
+                        main_ingredient: '글리세린',
+                        cas_number: '56-81-5',
+                        content_percentage: -5,
+                        status: 'collected'
+                    }
+                },
+                {
+                    name: '100% 초과 함량',
+                    ingredient: {
+                        ingredient_id: 'test-4',
+                        main_ingredient: '물',
+                        cas_number: '7732-18-5',
+                        content_percentage: 150,
+                        status: 'collected'
+                    }
+                },
+                {
+                    name: '잘못된 성분명',
+                    ingredient: {
+                        ingredient_id: 'test-5',
+                        main_ingredient: '잘못된 성분명',
+                        cas_number: '123-45-6',
+                        content_percentage: 5,
+                        status: 'collected'
+                    }
+                }
+            ];
+            
+            testCases.forEach(testCase => {
+                const issues = detectIngredientIssues(testCase.ingredient);
+                addLog(\`\${testCase.name}: \${issues.length}개 이슈 발견\`, issues.length > 0 ? 'warning' : 'success');
+                
+                issues.forEach(issue => {
+                    addLog(\`  - \${issue.type}: \${issue.title}\`, issue.type);
+                });
+            });
+            
+            addLog('이슈 탐지 테스트 완료', 'success');
+        }
+
+        // 모의 데이터 테스트
+        function testWithMockData() {
+            addLog('모의 데이터 테스트를 시작합니다...');
+            testDataStatus();
+        }
+    </script>
+</body>
+</html>

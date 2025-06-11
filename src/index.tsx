@@ -4,6 +4,12 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// 개발 환경에서만 테스트 도구 로드
+if (process.env.NODE_ENV === 'development') {
+  import('./utils/testDataRefinement');
+  import('./utils/uploadTestData');
+}
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );

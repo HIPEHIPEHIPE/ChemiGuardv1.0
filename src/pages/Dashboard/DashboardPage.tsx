@@ -38,12 +38,20 @@ const DashboardPage = () => {
 
   const ALL_STATUSES = [
     { key: 'collected', label: '수집완료', color: '#10b981' },
-    { key: 'annotated', label: '주석완료', color: '#3b82f6' },
+    { key: 'draft', label: '초안', color: '#f59e0b' },
     { key: 'reviewed', label: '검수완료', color: '#8b5cf6' },
     { key: 'approved', label: '승인완료', color: '#059669' },
+    { key: 'annotated', label: '주석완료', color: '#3b82f6' },
     { key: 'rejected', label: '반려', color: '#ef4444' },
-    { key: 'draft', label: '초안', color: '#f59e0b' },
   ];
+
+  const STATUS_GOALS: { [key: string]: number } = {
+    collected: 10000,
+    draft: 1000,
+    reviewed: 50000,
+    approved: 100000,
+    // others default to 0 or can be extended
+  };
 
   // 카테고리 매핑 함수 (CSV 데이터 → 표준 카테고리)
   const mapToStandardCategory = (csvCategory: string): string => {
@@ -118,7 +126,8 @@ const DashboardPage = () => {
       // 데이터 유무와 상관없이 항상 모든 상태 항목 생성
       const formattedProgress = ALL_STATUSES.map(statusInfo => {
         const count = statusCounts[statusInfo.key] || 0;
-        const percent = totalProducts > 0 ? Math.round((count / totalProducts) * 100) : 0;
+        const goal = STATUS_GOALS[statusInfo.key] || 0;
+        const percent = goal > 0 ? Math.round((count / goal) * 100) : 0;
         return {
           label: `${statusInfo.label}: ${count}건`,
           percent: percent,
