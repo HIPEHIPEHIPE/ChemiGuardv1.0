@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
-const { VertexAI } = require('@google-cloud/vertexai');
+const { GoogleGenAI } = require('@google/genai');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
@@ -22,42 +22,67 @@ const MSDS_BASE_URL = 'https://msds.kosha.or.kr/openapi/service/msdschem';
 const SERVICE_KEY = process.env.REACT_APP_MSDS_API_KEY;
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 
-// Vertex AI 설정
+// Google AI 설정
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
-const LOCATION = process.env.GCP_LOCATION || 'asia-northeast3';
+const LOCATION = process.env.GCP_LOCATION || 'global';
+const CREDENTIALS_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-let vertexAI;
+let genAI;
 let model;
 
-// Vertex AI 초기화
-if (PROJECT_ID && process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+// Google AI 초기화
+console.log('=== Google GenAI 초기화 시작 ===');
+console.log(`PROJECT_ID: ${PROJECT_ID}`);
+console.log(`LOCATION: ${LOCATION}`);
+console.log(`CREDENTIALS_PATH: ${CREDENTIALS_PATH}`);
+
+if (PROJECT_ID) {
   try {
-    vertexAI = new VertexAI({
+    // 환경변수로 GOOGLE_APPLICATION_CREDENTIALS 설정
+    if (CREDENTIALS_PATH) {
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = CREDENTIALS_PATH;
+      console.log(`환경변수 설정: ${CREDENTIALS_PATH}`);
+    }
+    
+    // gcloud auth application-default login으로 인증된 상태에서 사용
+    genAI = new GoogleGenAI({
+      vertexai: true,
       project: PROJECT_ID,
-      location: LOCATION,
-      googleAuthOptions: {
-        keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
-      }
+      location: LOCATION
     });
     
-    model = vertexAI.getGenerativeModel({
-      model: 'gemini-1.5-pro-001',
-    });
-    
-    console.log('Vertex AI 초기화 완료');
+    // 모델은 사용 시점에 지정
+    console.log('✅ Google GenAI 초기화 완료');
   } catch (error) {
-    console.error('Vertex AI 초기화 실패:', error);
-    console.log('Google AI Studio API를 대신 사용합니다.');
+    console.error('❌ Google GenAI 초기화 실패:', error);
   }
+} else {
+  console.log('⚠️ PROJECT_ID 누락');
 }
 
-// Vertex AI를 활용한 MSDS PDF 분석 (우선 사용)
+// Google Generative AI를 활용한 MSDS PDF 분석
 app.post('/api/gemini/extract-msds', async (req, res) => {
+  console.log('=== PDF 분석 요청 시작 ===');
+  
   try {
     const { fileData, fileName } = req.body;
     
+    console.log(`파일명: ${fileName}`);
+    console.log(`파일 데이터 크기: ${fileData ? fileData.length : 0} bytes`);
+    console.log(`Google GenAI 사용 가능: ${genAI ? 'YES' : 'NO'}`);
+    
     if (!fileData || !fileName) {
+      console.log('❌ 파일 데이터 또는 파일명 누락');
       return res.status(400).json({ error: 'PDF 파일 데이터와 파일명이 필요합니다.' });
+    }
+
+    // Google GenAI가 초기화되지 않은 경우 즉시 실패
+    if (!genAI) {
+      console.log('❌ Google GenAI가 초기화되지 않았습니다.');
+      return res.status(500).json({
+        error: 'Google GenAI 서비스를 사용할 수 없습니다.',
+        details: 'Google GenAI가 초기화되지 않았습니다. 설정을 확인해주세요.'
+      });
     }
 
     const prompt = `다음은 MSDS(Material Safety Data Sheet) PDF 문서입니다. 이 문서에서 화학물질 정보를 추출하여 JSON 형식으로 반환해주세요.
@@ -154,112 +179,102 @@ app.post('/api/gemini/extract-msds', async (req, res) => {
 
 정보가 없는 경우 빈 문자열("")이나 빈 배열([])을 사용하세요.`;
 
-    let result;
+    let responseResult;
 
-    // Vertex AI 우선 사용
-    if (model) {
-      try {
-        console.log('Vertex AI로 PDF 분석 시도...');
-        
-        const request = {
-          contents: [
+    // Google GenAI 사용 (구글 정확한 예시 코드 방식)
+    console.log('🔄 Google GenAI로 PDF 분석 시도...');
+    
+    const modelName = 'gemini-2.5-pro-preview-06-05';
+    
+    // 설정
+    const generationConfig = {
+      maxOutputTokens: 65535,
+      temperature: 1,
+      topP: 1,
+      seed: 0,
+      safetySettings: [
+        {
+          category: 'HARM_CATEGORY_HATE_SPEECH',
+          threshold: 'OFF',
+        },
+        {
+          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+          threshold: 'OFF',
+        },
+        {
+          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+          threshold: 'OFF',
+        },
+        {
+          category: 'HARM_CATEGORY_HARASSMENT',
+          threshold: 'OFF',
+        }
+      ],
+    };
+    
+    const apiRequest = {
+      model: modelName,
+      contents: [
+        {
+          role: 'user',
+          parts: [
             {
-              role: 'user',
-              parts: [
-                {
-                  text: prompt
-                },
-                {
-                  inline_data: {
-                    mime_type: 'application/pdf',
-                    data: fileData
-                  }
-                }
-              ]
+              text: prompt
+            },
+            {
+              inline_data: {
+                mime_type: 'application/pdf',
+                data: fileData
+              }
             }
           ]
-        };
+        }
+      ],
+      config: generationConfig
+    };
 
-        const response = await model.generateContent(request);
-        const responseText = response.response.candidates[0].content.parts[0].text;
-        
-        // JSON 파싱 시도
-        const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
-        const jsonText = jsonMatch ? jsonMatch[1] : responseText;
-        
-        const extractedData = JSON.parse(jsonText);
-        
-        return res.json({
-          success: true,
-          data: extractedData,
-          fileName: fileName,
-          source: 'vertex-ai'
-        });
-        
-      } catch (vertexError) {
-        console.error('Vertex AI 오류:', vertexError);
-        console.log('Google AI Studio API로 대체 시도...');
+    console.log('Google GenAI 요청 전송 중...');
+    const streamingResp = await genAI.models.generateContentStream(apiRequest);
+    console.log('✅ Google GenAI 스트리밍 응답 시작');
+    
+    // 스트리밍 응답 처리
+    let responseText = '';
+    for await (const chunk of streamingResp) {
+      if (chunk.text) {
+        responseText += chunk.text;
       }
     }
-
-    // Vertex AI 실패 시 Google AI Studio API 사용
-    if (GEMINI_API_KEY) {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              {
-                inline_data: {
-                  mime_type: "application/pdf",
-                  data: fileData
-                }
-              }
-            ]
-          }]
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Gemini API 오류: ${response.status}`);
-      }
-
-      result = await response.json();
-      
-      if (result.candidates && result.candidates[0] && result.candidates[0].content) {
-        const extractedText = result.candidates[0].content.parts[0].text;
-        
-        // JSON 파싱 시도
-        const jsonMatch = extractedText.match(/```json\s*([\s\S]*?)\s*```/);
-        const jsonText = jsonMatch ? jsonMatch[1] : extractedText;
-        
-        const extractedData = JSON.parse(jsonText);
-        
-        return res.json({
-          success: true,
-          data: extractedData,
-          fileName: fileName,
-          source: 'google-ai-studio'
-        });
-      }
-    }
-
-    throw new Error('사용 가능한 AI 서비스가 없습니다.');
+    
+    console.log('스트리밍 완료 - 응답 텍스트 길이:', responseText.length);
+    
+    // JSON 파싱 시도
+    const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+    const jsonText = jsonMatch ? jsonMatch[1] : responseText;
+    
+    console.log('JSON 파싱 시도...');
+    const extractedData = JSON.parse(jsonText);
+    console.log('✅ JSON 파싱 성공');
+    
+    return res.json({
+      success: true,
+      data: extractedData,
+      fileName: fileName,
+      source: 'google-generative-ai'
+    });
 
   } catch (error) {
-    console.error('MSDS PDF 분석 오류:', error);
+    console.error('💥 MSDS PDF 분석 최종 오류:', error);
+    console.error('오류 스택:', error.stack);
     res.status(500).json({
       error: 'PDF 분석 중 오류가 발생했습니다.',
       details: error.message
     });
+  } finally {
+    console.log('=== PDF 분석 요청 종료 ===\n');
   }
 });
 
-// 일반 텍스트 정제를 위한 Gemini API
+// 일반 텍스트 정제를 위한 Google Generative AI
 app.post('/api/gemini/refine-data', async (req, res) => {
   try {
     const { data, prompt = '다음 데이터를 정제하고 구조화해주세요:' } = req.body;
@@ -268,67 +283,45 @@ app.post('/api/gemini/refine-data', async (req, res) => {
       return res.status(400).json({ error: '정제할 데이터가 필요합니다.' });
     }
 
-    const fullPrompt = `${prompt}\n\n${JSON.stringify(data, null, 2)}`;
-    let result;
-
-    // Vertex AI 우선 사용
-    if (model) {
-      try {
-        const request = {
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: fullPrompt }]
-            }
-          ]
-        };
-
-        const response = await model.generateContent(request);
-        const responseText = response.response.candidates[0].content.parts[0].text;
-        
-        return res.json({
-          success: true,
-          result: responseText,
-          source: 'vertex-ai'
-        });
-        
-      } catch (vertexError) {
-        console.error('Vertex AI 오류:', vertexError);
-      }
-    }
-
-    // Google AI Studio API 사용
-    if (GEMINI_API_KEY) {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: fullPrompt }]
-          }]
-        })
+    // Google Generative AI가 초기화되지 않은 경우 즉시 실패
+    if (!model) {
+      return res.status(500).json({
+        error: 'Google Generative AI 서비스를 사용할 수 없습니다.',
+        details: 'Google Generative AI 모델이 초기화되지 않았습니다. API Key를 확인해주세요.'
       });
-
-      if (!response.ok) {
-        throw new Error(`Gemini API 오류: ${response.status}`);
-      }
-
-      result = await response.json();
-      
-      if (result.candidates && result.candidates[0] && result.candidates[0].content) {
-        const responseText = result.candidates[0].content.parts[0].text;
-        
-        return res.json({
-          success: true,
-          result: responseText,
-          source: 'google-ai-studio'
-        });
-      }
     }
 
-    throw new Error('사용 가능한 AI 서비스가 없습니다.');
+    const fullPrompt = `${prompt}\n\n${JSON.stringify(data, null, 2)}`;
+
+    const apiRequest = {
+      model: 'gemini-2.5-pro-preview-06-05',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: fullPrompt }]
+        }
+      ],
+      config: {
+        maxOutputTokens: 65535,
+        temperature: 1,
+        topP: 1
+      }
+    };
+
+    const streamingResp = await genAI.models.generateContentStream(apiRequest);
+    
+    let responseText = '';
+    for await (const chunk of streamingResp) {
+      if (chunk.text) {
+        responseText += chunk.text;
+      }
+    }
+    
+    return res.json({
+      success: true,
+      result: responseText,
+      source: 'google-generative-ai'
+    });
 
   } catch (error) {
     console.error('데이터 정제 오류:', error);
@@ -443,6 +436,5 @@ app.listen(PORT, () => {
   console.log(`프록시 서버가 포트 ${PORT}에서 실행 중입니다.`);
   console.log(`MSDS API Key: ${SERVICE_KEY ? '설정됨' : '설정되지 않음'}`);
   console.log(`Gemini API Key: ${GEMINI_API_KEY ? '설정됨' : '설정되지 않음'}`);
-  console.log(`GCP Project ID: ${PROJECT_ID ? PROJECT_ID : '설정되지 않음'}`);
-  console.log(`Vertex AI: ${model ? '사용 가능' : '사용 불가 (Google AI Studio API 대체 사용)'}`);
+  console.log(`Google GenAI: ${genAI ? '사용 가능' : '사용 불가'}`);
 });

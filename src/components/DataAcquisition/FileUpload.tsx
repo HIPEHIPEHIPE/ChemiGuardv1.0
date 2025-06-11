@@ -591,8 +591,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
         collected_method: 'pdf_analysis',
         collected_source: 'gemini_pdf_extraction',
         status: 'collected',
-        collected_date: new Date().toISOString().split('T')[0],
-        raw_data: extractedData
+        collected_date: new Date().toISOString().split('T')[0]
+        // raw_data: extractedData - products 테이블에 raw_data 컬럼이 없으므로 제거
       };
 
       const { data: product, error: productError } = await supabase
