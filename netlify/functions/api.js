@@ -83,14 +83,7 @@ router.post('/gemini/extract-msds', async (req, res) => {
     }
     // Gemini API 호출 (예시: 텍스트 추출)
     if (!genAI) {
-      return res.status(500).json({ 
-        error: 'Google GenAI not initialized',
-        debug: {
-          projectId: PROJECT_ID,
-          location: LOCATION,
-          hasCreds: !!process.env.GCP_CREDS_BASE64
-        }
-      });
+      return res.status(500).json({ error: 'Google GenAI not initialized' });
     }
     // 예시 프롬프트 (실제 프롬프트는 비즈니스 로직에 맞게 수정 필요)
     const prompt = `아래는 MSDS PDF에서 추출한 텍스트입니다. 핵심 정보를 표 형태로 정리해 주세요.\n\n${fileData}`;
@@ -112,14 +105,7 @@ router.post('/gemini/refine-data', async (req, res) => {
       return res.status(400).json({ error: 'extractedData, fileName required' });
     }
     if (!genAI) {
-      return res.status(500).json({ 
-        error: 'Google GenAI not initialized',
-        debug: {
-          projectId: PROJECT_ID,
-          location: LOCATION,
-          hasCreds: !!process.env.GCP_CREDS_BASE64
-        }
-      });
+      return res.status(500).json({ error: 'Google GenAI not initialized' });
     }
     // 예시 프롬프트 (추출 데이터 정제)
     const prompt = `다음은 MSDS에서 추출된 정보입니다. 표준화된 JSON 포맷으로 정제해 주세요.\n\n${extractedData}`;
@@ -140,25 +126,17 @@ router.get('/msds/chemlist', async (req, res) => {
     if (!search) {
       return res.status(400).json({ error: 'search query required' });
     }
-
     const url = `${MSDS_BASE_URL}/getMsdsChemList?serviceKey=${SERVICE_KEY}&searchWord=${encodeURIComponent(
       search
     )}&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
-
-    // ↓↓↓↓ 여기서 리턴시켜서 확인해보자!
-    return res.json({
-      debug: {
-        serviceKey: SERVICE_KEY,
-        url
-      },
-      note: '디버깅용 응답입니다. 원래 API 호출 전단계입니다.'
-    });
-
-    // 원래 로직은 일단 주석 처리
-    // const response = await fetch(url);
-    // const data = await response.json();
-    // res.json(data);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('MSDS API fetch error');
+    }
+    const data = await response.json();
+    res.json(data);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'MSDS chemlist error', details: error.message });
   }
 });
@@ -192,14 +170,7 @@ router.post('/gemini/generate-qa', async (req, res) => {
       return res.status(400).json({ error: 'msdsContent required' });
     }
     if (!genAI) {
-      return res.status(500).json({ 
-        error: 'Google GenAI not initialized',
-        debug: {
-          projectId: PROJECT_ID,
-          location: LOCATION,
-          hasCreds: !!process.env.GCP_CREDS_BASE64
-        }
-      });
+      return res.status(500).json({ error: 'Google GenAI not initialized' });
     }
     const prompt = `아래 MSDS 내용을 기반으로 5개의 Q&A를 생성해 주세요.\n\n${msdsContent}`;
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
@@ -220,14 +191,7 @@ router.post('/gemini/generate-question', async (req, res) => {
       return res.status(400).json({ error: 'msdsContent required' });
     }
     if (!genAI) {
-      return res.status(500).json({ 
-        error: 'Google GenAI not initialized',
-        debug: {
-          projectId: PROJECT_ID,
-          location: LOCATION,
-          hasCreds: !!process.env.GCP_CREDS_BASE64
-        }
-      });
+      return res.status(500).json({ error: 'Google GenAI not initialized' });
     }
     const prompt = `아래 MSDS 내용을 바탕으로 1개의 퀴즈(문제)만 만들어 주세요.\n\n${msdsContent}`;
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
@@ -248,14 +212,7 @@ router.post('/gemini/generate-answer', async (req, res) => {
       return res.status(400).json({ error: 'msdsContent and question required' });
     }
     if (!genAI) {
-      return res.status(500).json({ 
-        error: 'Google GenAI not initialized',
-        debug: {
-          projectId: PROJECT_ID,
-          location: LOCATION,
-          hasCreds: !!process.env.GCP_CREDS_BASE64
-        }
-      });
+      return res.status(500).json({ error: 'Google GenAI not initialized' });
     }
     const prompt = `아래 MSDS 내용을 참고하여 다음 질문에 대한 답변을 작성해 주세요.\n\nMSDS 내용:\n${msdsContent}\n\n질문:\n${question}`;
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });

@@ -3,11 +3,14 @@
   publish = "build"
   command = "npm run build"
 
+# API 요청을 위한 리다이렉트 (가장 위에 위치시키고 force=true 추가)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+  force = true  # <-- 이 줄을 추가하세요! 이것이 핵심입니다.
 
+# SPA를 위한 리다이렉트 (catch-all)
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -15,11 +18,3 @@
 
 [functions]
   node_bundler = "esbuild"
-
-# Environment variables are set in Netlify dashboard
-# Required environment variables:
-# - REACT_APP_MSDS_API_KEY
-# - REACT_APP_GEMINI_API_KEY  
-# - GCP_PROJECT_ID
-# - GCP_LOCATION (optional, defaults to 'global')
-# - GCP_CREDS_BASE64 (base64 encoded service account JSON)
