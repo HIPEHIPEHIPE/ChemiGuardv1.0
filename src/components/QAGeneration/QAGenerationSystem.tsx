@@ -280,9 +280,7 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
             />
-            <button style={btnStyle('secondary')} onClick={handleGenerateQA}>
-              🤖 AI 질문 생성
-            </button>
+
           </div>
 
           <div style={{ marginBottom: '20px' }}>
