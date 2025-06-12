@@ -4,7 +4,7 @@
 // 프록시 서버 기본 설정
 const PROXY_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api/msds'  // 프로덕션에서는 같은 도메인
-  : 'http://localhost:3001/api/msds';  // 개발환경에서는 프록시 서버
+  : 'http://localhost:3002/api/msds';  // 개발환경에서는 프록시 서버
 
 // 검색 조건 상수
 export const SEARCH_CONDITIONS = {
@@ -180,7 +180,7 @@ export class MSDSApiService {
   ): Promise<ChemicalDetailResponse> {
     try {
       const params = new URLSearchParams({
-        chemId: chemId.toString()
+        chemno: chemId.toString()
       });
 
       const url = `${PROXY_BASE_URL}/chemdetail/${detailType.padStart(2, '0')}?${params.toString()}`;
