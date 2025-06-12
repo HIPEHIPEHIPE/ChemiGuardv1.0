@@ -29,6 +29,7 @@ interface NetlifyResponse {
 type Handler = (event: NetlifyEvent, context: NetlifyContext) => Promise<NetlifyResponse>;
 
 const { GoogleGenAI } = require('@google/genai');
+const { GoogleAuth } = require('google-auth-library');
 
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
 const LOCATION = process.env.GCP_LOCATION || 'global';
@@ -54,11 +55,19 @@ async function initializeGenAI() {
       console.log('🔑 서비스 계정 키 디코딩 완료');
       console.log(`Client Email: ${credentials.client_email}`);
       
+      // GoogleAuth 라이브러리를 사용하여 인증 객체 생성
+      const auth = new GoogleAuth({
+        credentials: credentials,
+        scopes: ['https://www.googleapis.com/auth/cloud-platform']
+      });
+      
+      console.log('🔐 GoogleAuth 객체 생성 완료');
+      
       genAI = new GoogleGenAI({
         vertexai: true,
         project: PROJECT_ID,
         location: LOCATION,
-        credentials: credentials
+        credentials: auth
       });
       
       console.log('✅ Google GenAI 초기화 완료');
