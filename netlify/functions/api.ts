@@ -204,7 +204,7 @@ router.post('/gemini/generate-answer', async (req: Request, res: Response) => {
   }
 });
 
-app.use('/api', router);
+app.use('/', router); 
 
 // module.exports.handler = serverless(app);
 export const handler = serverless(app);
