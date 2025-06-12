@@ -29,7 +29,7 @@ interface NetlifyResponse {
 type Handler = (event: NetlifyEvent, context: NetlifyContext) => Promise<NetlifyResponse>;
 
 const { GoogleGenAI } = require('@google/genai');
-const { GoogleAuth } = require('google-auth-library');
+const { JWT } = require('google-auth-library');
 
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
 const LOCATION = process.env.GCP_LOCATION || 'global';
@@ -43,7 +43,6 @@ async function initializeGenAI() {
   console.log('=== Google GenAI 초기화 시작 ===');
   console.log(`PROJECT_ID: ${PROJECT_ID}`);
   console.log(`LOCATION: ${LOCATION}`);
-  console.log(`CREDENTIALS_PATH: undefined`);
   console.log(`GCP_CREDS_BASE64 exists: ${!!GCP_CREDS_BASE64}`);
 
   if (PROJECT_ID && GCP_CREDS_BASE64) {
@@ -54,25 +53,32 @@ async function initializeGenAI() {
       
       console.log('🔑 서비스 계정 키 디코딩 완료');
       console.log(`Client Email: ${credentials.client_email}`);
+      console.log(`Project ID from creds: ${credentials.project_id}`);
       
-      // GoogleAuth 라이브러리를 사용하여 인증 객체 생성
-      const auth = new GoogleAuth({
-        credentials: credentials,
+      // JWT 클라이언트 직접 생성
+      const jwtClient = new JWT({
+        email: credentials.client_email,
+        key: credentials.private_key,
         scopes: ['https://www.googleapis.com/auth/cloud-platform']
       });
       
-      console.log('🔐 GoogleAuth 객체 생성 완료');
+      console.log('🔐 JWT 클라이언트 생성 완료');
+      
+      // JWT 토큰 획득 테스트
+      await jwtClient.authorize();
+      console.log('✅ JWT 인증 성공');
       
       genAI = new GoogleGenAI({
         vertexai: true,
         project: PROJECT_ID,
         location: LOCATION,
-        credentials: auth
+        credentials: jwtClient
       });
       
       console.log('✅ Google GenAI 초기화 완료');
     } catch (error) {
       console.error('❌ Google GenAI 초기화 실패:', error);
+      console.error('에러 상세:', error.message);
     }
   } else {
     console.error('❌ 필수 환경 변수 누락:', {
