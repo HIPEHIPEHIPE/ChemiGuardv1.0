@@ -3,10 +3,10 @@
   publish = "build"
   command = "npm run build"
 
-# 간단한 API 테스트
+# 기존 Express API (원래 버전)
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api-simple/:splat"
+  to = "/.netlify/functions/api/:splat"
   status = 200
 
 # SPA를 위한 리다이렉트
