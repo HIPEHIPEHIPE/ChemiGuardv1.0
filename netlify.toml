@@ -3,6 +3,12 @@
   publish = "build"
   command = "npm run build"
 
+# GenAI 테스트 함수
+[[redirects]]
+  from = "/api/genai-test"
+  to = "/.netlify/functions/genai-test"
+  status = 200
+
 # 기존 Express API (원래 버전)
 [[redirects]]
   from = "/api/*"
