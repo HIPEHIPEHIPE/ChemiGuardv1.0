@@ -1,4 +1,8 @@
-# API routes to Netlify Functions
+# 개별 함수에 대한 직접 리다이렉트 (가장 명확한 방법)
+/api/msds/chemlist  /.netlify/functions/msds/chemlist  200
+/api/test  /.netlify/functions/test  200
+
+# 기존 Express API에 대한 리다이렉트
 /api/*  /.netlify/functions/api/:splat  200
 
 # SPA fallback
