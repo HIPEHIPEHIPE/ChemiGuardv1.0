@@ -89,7 +89,7 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
-    const url = `${MSDS_BASE_URL}/chemlist?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
+    const url = `${MSDS_BASE_URL}/chemlist?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}`;
     
     console.log('Fetching MSDS API...');
     console.log('URL (without key):', url.replace(SERVICE_KEY, '[HIDDEN]'));
@@ -105,16 +105,18 @@ export const handler: Handler = async (event, context) => {
       throw new Error(`MSDS API responded with status: ${response.status}`);
     }
     
-    const data = await response.json();
-    console.log('MSDS API response data (first 500 chars):', JSON.stringify(data).substring(0, 500));
+    const xmlText = await response.text();
+    console.log('MSDS API XML response (first 500 chars):', xmlText.substring(0, 500));
     
+    // XML을 JSON으로 변환하는 간단한 파서
+    // 실제 프로덕션에서는 더 정교한 XML 파서를 사용해야 함
     return {
       statusCode: 200,
       headers: {
         ...headers,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/xml'
       },
-      body: JSON.stringify(data)
+      body: xmlText
     };
   } catch (error) {
     console.error('MSDS chemlist error:', error);

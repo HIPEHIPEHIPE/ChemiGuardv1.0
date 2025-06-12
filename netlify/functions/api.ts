@@ -85,7 +85,7 @@ app.get('/msds/chemlist', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'MSDS API key not configured' });
     }
 
-    const url = `${MSDS_BASE_URL}/chemlist?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
+    const url = `${MSDS_BASE_URL}/chemlist?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}`;
     
     console.log('Fetching URL:', url);
     
@@ -95,10 +95,12 @@ app.get('/msds/chemlist', async (req: Request, res: Response) => {
       throw new Error(`MSDS API responded with status: ${response.status}`);
     }
     
-    const data = await response.json();
-    console.log('MSDS API response:', data);
+    const xmlText = await response.text();
+    console.log('MSDS API XML response received');
     
-    res.json(data);
+    // XML 응답을 그대로 반환 (클라이언트에서 파싱)
+    res.set('Content-Type', 'application/xml');
+    res.send(xmlText);
   } catch (error) {
     console.error('MSDS chemlist error:', error);
     res.status(500).json({ 
@@ -121,7 +123,7 @@ app.get('/msds/chemdetail/:detailType', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'MSDS API key not configured' });
     }
 
-    const url = `${MSDS_BASE_URL}/chemdetail${detailType}?serviceKey=${SERVICE_KEY}&chemno=${encodeURIComponent(chemno)}&type=json`;
+    const url = `${MSDS_BASE_URL}/chemdetail${detailType}?serviceKey=${SERVICE_KEY}&chemno=${encodeURIComponent(chemno)}`;
     
     console.log('Fetching MSDS detail URL:', url);
     
@@ -131,8 +133,11 @@ app.get('/msds/chemdetail/:detailType', async (req: Request, res: Response) => {
       throw new Error(`MSDS API responded with status: ${response.status}`);
     }
     
-    const data = await response.json();
-    res.json(data);
+    const xmlText = await response.text();
+    
+    // XML 응답을 그대로 반환
+    res.set('Content-Type', 'application/xml');
+    res.send(xmlText);
   } catch (error) {
     console.error('MSDS chemdetail error:', error);
     res.status(500).json({ 
