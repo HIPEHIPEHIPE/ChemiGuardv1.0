@@ -579,6 +579,82 @@ app.get('/gemini/status', (req: Request, res: Response) => {
   });
 });
 
+// GenAI 테스트 엔드포인트 추가
+app.get('/genai-test', async (req: Request, res: Response) => {
+  console.log('🧪 GenAI 테스트 함수 호출 (GET)!');
+  
+  try {
+    return res.json({
+      success: true,
+      message: 'GenAI 테스트 함수가 작동합니다!',
+      genAI: !!genAI,
+      projectId: PROJECT_ID,
+      location: LOCATION,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('GenAI 테스트 오류:', error);
+    return res.status(500).json({
+      error: 'GenAI 테스트 실패',
+      details: (error as Error).message
+    });
+  }
+});
+
+app.post('/genai-test', async (req: Request, res: Response) => {
+  console.log('🧪 GenAI 테스트 함수 호출 (POST)!');
+  
+  try {
+    if (!genAI) {
+      return res.status(500).json({
+        error: 'Google GenAI가 초기화되지 않았습니다.'
+      });
+    }
+
+    const testPrompt = '안녕하세요를 영어로 번역해주세요.';
+    
+    const apiRequest = {
+      model: 'gemini-2.5-pro-preview-06-05',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: testPrompt }]
+        }
+      ],
+      config: {
+        maxOutputTokens: 100,
+        temperature: 0.5
+      }
+    };
+
+    console.log('🚀 GenAI 테스트 요청 전송 중...');
+    const streamingResp = await genAI.models.generateContentStream(apiRequest);
+    
+    let responseText = '';
+    for await (const chunk of streamingResp) {
+      if (chunk.text) {
+        responseText += chunk.text;
+      }
+    }
+    
+    console.log('✅ GenAI 테스트 완료');
+    
+    return res.json({
+      success: true,
+      result: responseText,
+      message: 'GenAI 테스트 성공!',
+      source: 'google-genai'
+    });
+    
+  } catch (error) {
+    console.error('💥 GenAI API 호출 오류:', error);
+    return res.status(500).json({
+      error: 'GenAI API 호출 실패',
+      details: (error as Error).message
+    });
+  }
+});
+
 // 간단한 테스트 엔드포인트
 app.post('/gemini/test', async (req: Request, res: Response) => {
   console.log('🧪 Gemini 테스트 요청');
