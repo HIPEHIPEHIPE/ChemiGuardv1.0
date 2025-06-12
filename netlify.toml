@@ -3,7 +3,31 @@
   publish = "build"
   command = "npm run build"
 
-# AI 관련 함수들의 리다이렉트 설정
+[functions]
+  node_bundler = "esbuild"
+
+# 간단한 테스트 함수들 (맨 위에 추가)
+[[redirects]]
+  from = "/api/hello"
+  to = "/.netlify/functions/simple-hello"
+  status = 200
+
+[[redirects]]
+  from = "/api/hello-js"
+  to = "/.netlify/functions/hello-js"
+  status = 200
+
+# AI 관련 함수들의 리다이렉트 설정 (우선순위 높게)
+[[redirects]]
+  from = "/api/genai-test"
+  to = "/.netlify/functions/genai-test"
+  status = 200
+
+[[redirects]]
+  from = "/api/debug-ai"
+  to = "/.netlify/functions/debug-ai"
+  status = 200
+
 [[redirects]]
   from = "/api/gemini/generate-qa"
   to = "/.netlify/functions/gemini-generate-qa"
@@ -29,19 +53,18 @@
   to = "/.netlify/functions/genai-test"
   status = 200
 
-# GenAI 테스트 함수
-[[redirects]]
-  from = "/api/genai-test"
-  to = "/.netlify/functions/genai-test"
-  status = 200
-
 # MSDS API 함수들
 [[redirects]]
-  from = "/api/msds/*"
+  from = "/api/msds/chemlist"
+  to = "/.netlify/functions/msds-chemlist"
+  status = 200
+
+[[redirects]]
+  from = "/api/msds/chemdetail/*"
   to = "/.netlify/functions/msds/:splat"
   status = 200
 
-# 기존 Express API
+# 기존 Express API (우선순위 낮게)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
@@ -52,6 +75,3 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-[functions]
-  node_bundler = "esbuild"
