@@ -262,10 +262,10 @@ app.post('/api/gemini/refine-data', async (req, res) => {
     }
 
     // Google Generative AI가 초기화되지 않은 경우 즉시 실패
-    if (!model) {
+    if (!genAI) {
       return res.status(500).json({
         error: 'Google Generative AI 서비스를 사용할 수 없습니다.',
-        details: 'Google Generative AI 모델이 초기화되지 않았습니다. API Key를 확인해주세요.'
+        details: 'Google GenAI가 초기화되지 않았습니다. 설정을 확인해주세요.'
       });
     }
 

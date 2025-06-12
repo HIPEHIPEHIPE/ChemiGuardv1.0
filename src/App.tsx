@@ -32,7 +32,7 @@ function App() {
         const { data: worker, error: workerError } = await supabase
           .from('workers')
           .select('name, organization, role')
-          .eq('uuid', user.id)
+          .eq('id', user.id)
           .single();
 
         if (workerError) {
