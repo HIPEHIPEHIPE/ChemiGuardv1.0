@@ -1,4 +1,4 @@
-// src/api/qaGeneration.ts - 실제 Gen AI API 연결 (업데이트됨)
+// src/api/qaGeneration.ts - 수정된 Gen AI API 연결
 import { ChemicalData } from '../types/qaGeneration';
 
 export interface QAGenerationRequest {
@@ -71,7 +71,8 @@ export const generateQA = async (request: QAGenerationRequest): Promise<QAGenera
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API 요청 실패: ${response.status} ${response.statusText} - ${errorText}`);
+      console.error('API 응답 오류:', response.status, errorText);
+      throw new Error(`API 요청 실패: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
@@ -114,60 +115,13 @@ export const generateQuestion = async (
   difficultyLevel: string,
   language: string = 'ko'
 ): Promise<QAGenerationResponse> => {
-  try {
-    console.log('❓ 질문 생성 API 호출:', {
-      chemical: chemical.name,
-      questionType,
-      difficultyLevel
-    });
-
-    const response = await fetch('/api/gemini/generate-question', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chemical: chemical,
-        qaType: questionType,
-        difficultyLevel: difficultyLevel,
-        language: language
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API 요청 실패: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('✅ 질문 생성 API 응답:', result);
-    
-    if (result.success && result.result) {
-      return {
-        success: true,
-        result: {
-          question: result.result.question || `${chemical.name}에 대한 ${questionType} 관련 질문`,
-          answer: '',
-          category: getCategoryFromType(questionType),
-          metadata: {
-            generatedAt: new Date().toISOString(),
-            model: 'gemini-2.5-pro',
-            temperature: 0.7,
-          },
-        },
-      };
-    } else {
-      throw new Error(result.error || '질문 생성 실패');
-    }
-
-  } catch (error) {
-    console.error('💥 질문 생성 오류:', error);
-    return {
-      success: false,
-      error: '질문 생성 중 오류가 발생했습니다.',
-      details: error instanceof Error ? error.message : '알 수 없는 오류',
-    };
-  }
+  // generateQA와 동일한 함수 사용 (서버에서 구분 처리)
+  return generateQA({
+    chemical,
+    questionType: questionType as 'safety' | 'usage' | 'component' | 'regulation',
+    difficultyLevel: difficultyLevel as 'general' | 'professional' | 'expert',
+    language: language as 'ko' | 'en'
+  });
 };
 
 /**
@@ -204,7 +158,8 @@ export const generateAnswer = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API 요청 실패: ${response.status} ${response.statusText} - ${errorText}`);
+      console.error('API 응답 오류:', response.status, errorText);
+      throw new Error(`API 요청 실패: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
@@ -295,6 +250,11 @@ export const evaluateQA = async (
       }),
     });
 
+    if (!response.ok) {
+      console.error('평가 API 오류:', response.status);
+      throw new Error('평가 API 호출 실패');
+    }
+
     const result = await response.json();
     
     if (result.success) {
@@ -317,6 +277,48 @@ export const evaluateQA = async (
       score: 0,
       feedback: '평가 중 오류가 발생했습니다.',
       suggestions: [],
+    };
+  }
+};
+
+// API 상태 확인
+export const checkAPIStatus = async (): Promise<{
+  available: boolean;
+  genAI: boolean;
+  error?: string;
+}> => {
+  try {
+    console.log('🔍 API 상태 확인 중...');
+    
+    const response = await fetch('/api/genai-test', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error('API 상태 확인 실패:', response.status);
+      return {
+        available: false,
+        genAI: false,
+        error: `API 상태 확인 실패: ${response.status}`,
+      };
+    }
+
+    const status = await response.json();
+    console.log('✅ API 상태:', status);
+    
+    return {
+      available: status.success || false,
+      genAI: status.genAI || false,
+    };
+  } catch (error) {
+    console.error('API 상태 확인 중 오류:', error);
+    return {
+      available: false,
+      genAI: false,
+      error: error instanceof Error ? error.message : '상태 확인 실패',
     };
   }
 };
@@ -422,40 +424,4 @@ export const handleAPIError = (error: any): QAGenerationResponse => {
     error: errorMessage,
     details: details,
   };
-};
-
-// API 상태 확인
-export const checkAPIStatus = async (): Promise<{
-  available: boolean;
-  genAI: boolean;
-  error?: string;
-}> => {
-  try {
-    const response = await fetch('/api/gemini/status', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return {
-        available: false,
-        genAI: false,
-        error: `API 상태 확인 실패: ${response.status}`,
-      };
-    }
-
-    const status = await response.json();
-    return {
-      available: true,
-      genAI: status.genAI || false,
-    };
-  } catch (error) {
-    return {
-      available: false,
-      genAI: false,
-      error: error instanceof Error ? error.message : '상태 확인 실패',
-    };
-  }
 };
