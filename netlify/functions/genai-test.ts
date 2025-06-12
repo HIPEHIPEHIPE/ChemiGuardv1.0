@@ -30,6 +30,9 @@ type Handler = (event: NetlifyEvent, context: NetlifyContext) => Promise<Netlify
 
 const { GoogleGenAI } = require('@google/genai');
 const { JWT } = require('google-auth-library');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
 const LOCATION = process.env.GCP_LOCATION || 'global';
@@ -90,13 +93,26 @@ async function initializeGenAI() {
     await jwtClient.authorize();
     console.log('✅ JWT 인증 성공');
     
+    // 임시 파일로 인증 정보 저장
+    const tmpDir = os.tmpdir();
+    const credentialsPath = path.join(tmpDir, 'gcp-credentials.json');
+    fs.writeFileSync(credentialsPath, JSON.stringify(credentials));
+    
+    // 환경 변수로 Google 인증 정보 설정
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+    process.env.GOOGLE_CLOUD_PROJECT = PROJECT_ID;
+    process.env.GOOGLE_CLOUD_LOCATION = LOCATION;
+    
+    console.log('🔧 임시 파일 생성 및 환경 변수 설정 완료');
+    console.log(`인증 파일 경로: ${credentialsPath}`);
+    
     console.log('🚀 GoogleGenAI 인스턴스 생성 시작...');
     
     genAI = new GoogleGenAI({
       vertexai: true,
       project: PROJECT_ID,
-      location: LOCATION,
-      credentials: jwtClient
+      location: LOCATION
+      // credentials 제거 - 환경 변수 사용
     });
     
     console.log('✅ Google GenAI 초기화 완료');
