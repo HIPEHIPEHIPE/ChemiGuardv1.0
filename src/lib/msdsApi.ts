@@ -53,7 +53,14 @@ export interface ChemicalDetailResponse {
   items: ChemicalDetailItem[];
 }
 
-// API 응답 XML을 파싱하는 유틸리티 함수
+// JSON 응답 타입 정의 (백엔드 api.ts와 맞춤)
+interface APIJsonResponse {
+  success: boolean;
+  data: any;
+  source: string;
+}
+
+// XML 파싱 함수들 (JSON 응답이 실패할 경우 fallback용)
 function parseXMLResponse(xmlText: string): any {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
@@ -67,8 +74,7 @@ function parseXMLResponse(xmlText: string): any {
   return xmlDoc;
 }
 
-// 화학물질 목록을 파싱하는 함수
-function parseChemicalList(xmlDoc: Document): ChemicalListResponse {
+function parseChemicalListFromXML(xmlDoc: Document): ChemicalListResponse {
   const items: ChemicalListItem[] = [];
   const itemElements = xmlDoc.querySelectorAll('item');
   
@@ -97,8 +103,7 @@ function parseChemicalList(xmlDoc: Document): ChemicalListResponse {
   };
 }
 
-// 화학물질 상세정보를 파싱하는 함수
-function parseChemicalDetail(xmlDoc: Document): ChemicalDetailResponse {
+function parseChemicalDetailFromXML(xmlDoc: Document): ChemicalDetailResponse {
   const items: ChemicalDetailItem[] = [];
   const itemElements = xmlDoc.querySelectorAll('item');
   
@@ -116,6 +121,69 @@ function parseChemicalDetail(xmlDoc: Document): ChemicalDetailResponse {
   });
 
   return { items };
+}
+
+// JSON에서 화학물질 목록을 파싱하는 함수
+function parseChemicalListFromJSON(jsonData: any): ChemicalListResponse {
+  const response = jsonData.response || jsonData;
+  const body = response.body || response;
+  const items = body.items || [];
+  
+  const parsedItems: ChemicalListItem[] = [];
+  
+  // items가 배열인지 확인
+  const itemsArray = Array.isArray(items.item) ? items.item : 
+                     items.item ? [items.item] : 
+                     Array.isArray(items) ? items : [];
+  
+  itemsArray.forEach((item: any) => {
+    const chemicalItem: ChemicalListItem = {
+      casNo: item.casNo || '',
+      chemId: parseInt(item.chemId || '0'),
+      chemNameKor: item.chemNameKor || '',
+      enNo: item.enNo || '',
+      keNo: item.keNo || '',
+      unNo: item.unNo || '',
+      lastDate: item.lastDate || ''
+    };
+    parsedItems.push(chemicalItem);
+  });
+
+  return {
+    items: parsedItems,
+    numOfRows: parseInt(body.numOfRows || '0'),
+    pageNo: parseInt(body.pageNo || '1'),
+    totalCount: parseInt(body.totalCount || '0')
+  };
+}
+
+// JSON에서 화학물질 상세정보를 파싱하는 함수
+function parseChemicalDetailFromJSON(jsonData: any): ChemicalDetailResponse {
+  const response = jsonData.response || jsonData;
+  const body = response.body || response;
+  const items = body.items || [];
+  
+  const parsedItems: ChemicalDetailItem[] = [];
+  
+  // items가 배열인지 확인
+  const itemsArray = Array.isArray(items.item) ? items.item : 
+                     items.item ? [items.item] : 
+                     Array.isArray(items) ? items : [];
+  
+  itemsArray.forEach((item: any) => {
+    const detailItem: ChemicalDetailItem = {
+      lev: parseInt(item.lev || '0'),
+      msdsItemCode: parseInt(item.msdsItemCode || '0'),
+      upMsdsItemCode: item.upMsdsItemCode || '',
+      msdsItemNameKor: item.msdsItemNameKor || '',
+      msdsItemNo: item.msdsItemNo || '',
+      ordrIdx: parseInt(item.ordrIdx || '0'),
+      itemDetail: item.itemDetail || ''
+    };
+    parsedItems.push(detailItem);
+  });
+
+  return { items: parsedItems };
 }
 
 // MSDS API 클래스 (프록시 서버 사용)
@@ -152,7 +220,7 @@ export class MSDSApiService {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/xml',
+          'Accept': 'application/json, application/xml', // JSON을 우선으로, XML도 허용
         }
       });
 
@@ -162,18 +230,44 @@ export class MSDSApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const xmlText = await response.text();
-      const xmlDoc = parseXMLResponse(xmlText);
+      const contentType = response.headers.get('content-type') || '';
       
-      // 결과 코드 확인
-      const resultCode = xmlDoc.querySelector('resultCode')?.textContent;
-      const resultMsg = xmlDoc.querySelector('resultMsg')?.textContent;
+      // JSON 응답 처리 (신규 백엔드)
+      if (contentType.includes('application/json')) {
+        console.log('✅ JSON 응답 수신');
+        const jsonResponse: APIJsonResponse = await response.json();
+        
+        if (!jsonResponse.success) {
+          throw new Error('API 응답 실패: ' + JSON.stringify(jsonResponse));
+        }
+        
+        return parseChemicalListFromJSON(jsonResponse.data);
+      }
       
-      if (resultCode !== '00') {
-        throw new Error(`API 오류: ${resultMsg} (코드: ${resultCode})`);
+      // XML 응답 처리 (기존 백엔드 또는 fallback)
+      else if (contentType.includes('application/xml')) {
+        console.log('⚠️ XML 응답 수신 (fallback)');
+        const xmlText = await response.text();
+        const xmlDoc = parseXMLResponse(xmlText);
+        
+        // 결과 코드 확인
+        const resultCode = xmlDoc.querySelector('resultCode')?.textContent;
+        const resultMsg = xmlDoc.querySelector('resultMsg')?.textContent;
+        
+        if (resultCode !== '00') {
+          throw new Error(`API 오류: ${resultMsg} (코드: ${resultCode})`);
+        }
+
+        return parseChemicalListFromXML(xmlDoc);
+      }
+      
+      // 알 수 없는 응답 타입
+      else {
+        const responseText = await response.text();
+        console.error('알 수 없는 응답 타입:', contentType, responseText.substring(0, 200));
+        throw new Error(`지원되지 않는 응답 타입: ${contentType}`);
       }
 
-      return parseChemicalList(xmlDoc);
     } catch (error) {
       console.error('화학물질 목록 조회 오류:', error);
       throw error;
@@ -200,7 +294,7 @@ export class MSDSApiService {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/xml',
+          'Accept': 'application/json, application/xml', // JSON을 우선으로, XML도 허용
         }
       });
 
@@ -210,18 +304,44 @@ export class MSDSApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const xmlText = await response.text();
-      const xmlDoc = parseXMLResponse(xmlText);
+      const contentType = response.headers.get('content-type') || '';
       
-      // 결과 코드 확인
-      const resultCode = xmlDoc.querySelector('resultCode')?.textContent;
-      const resultMsg = xmlDoc.querySelector('resultMsg')?.textContent;
+      // JSON 응답 처리 (신규 백엔드)
+      if (contentType.includes('application/json')) {
+        console.log('✅ JSON 응답 수신');
+        const jsonResponse: APIJsonResponse = await response.json();
+        
+        if (!jsonResponse.success) {
+          throw new Error('API 응답 실패: ' + JSON.stringify(jsonResponse));
+        }
+        
+        return parseChemicalDetailFromJSON(jsonResponse.data);
+      }
       
-      if (resultCode !== '00') {
-        throw new Error(`API 오류: ${resultMsg} (코드: ${resultCode})`);
+      // XML 응답 처리 (기존 백엔드 또는 fallback)
+      else if (contentType.includes('application/xml')) {
+        console.log('⚠️ XML 응답 수신 (fallback)');
+        const xmlText = await response.text();
+        const xmlDoc = parseXMLResponse(xmlText);
+        
+        // 결과 코드 확인
+        const resultCode = xmlDoc.querySelector('resultCode')?.textContent;
+        const resultMsg = xmlDoc.querySelector('resultMsg')?.textContent;
+        
+        if (resultCode !== '00') {
+          throw new Error(`API 오류: ${resultMsg} (코드: ${resultCode})`);
+        }
+
+        return parseChemicalDetailFromXML(xmlDoc);
+      }
+      
+      // 알 수 없는 응답 타입
+      else {
+        const responseText = await response.text();
+        console.error('알 수 없는 응답 타입:', contentType, responseText.substring(0, 200));
+        throw new Error(`지원되지 않는 응답 타입: ${contentType}`);
       }
 
-      return parseChemicalDetail(xmlDoc);
     } catch (error) {
       console.error('화학물질 상세정보 조회 오류:', error);
       throw error;
