@@ -38,53 +38,72 @@ const GCP_CREDS_BASE64 = process.env.GCP_CREDS_BASE64;
 let genAI: any;
 
 async function initializeGenAI() {
-  if (genAI) return;
+  console.log('🔍 initializeGenAI 함수 진입!');
+  
+  if (genAI) {
+    console.log('ℹ️ genAI 이미 초기화됨, 스킵');
+    return;
+  }
 
   console.log('=== Google GenAI 초기화 시작 ===');
   console.log(`PROJECT_ID: ${PROJECT_ID}`);
   console.log(`LOCATION: ${LOCATION}`);
   console.log(`GCP_CREDS_BASE64 exists: ${!!GCP_CREDS_BASE64}`);
+  
+  if (!PROJECT_ID) {
+    console.error('❌ PROJECT_ID가 없습니다!');
+    return;
+  }
+  
+  if (!GCP_CREDS_BASE64) {
+    console.error('❌ GCP_CREDS_BASE64가 없습니다!');
+    return;
+  }
 
-  if (PROJECT_ID && GCP_CREDS_BASE64) {
-    try {
-      // Base64 디코딩하여 서비스 계정 키 파싱
-      const credentialsJson = Buffer.from(GCP_CREDS_BASE64, 'base64').toString('utf-8');
-      const credentials = JSON.parse(credentialsJson);
-      
-      console.log('🔑 서비스 계정 키 디코딩 완료');
-      console.log(`Client Email: ${credentials.client_email}`);
-      console.log(`Project ID from creds: ${credentials.project_id}`);
-      
-      // JWT 클라이언트 직접 생성
-      const jwtClient = new JWT({
-        email: credentials.client_email,
-        key: credentials.private_key,
-        scopes: ['https://www.googleapis.com/auth/cloud-platform']
-      });
-      
-      console.log('🔐 JWT 클라이언트 생성 완료');
-      
-      // JWT 토큰 획득 테스트
-      await jwtClient.authorize();
-      console.log('✅ JWT 인증 성공');
-      
-      genAI = new GoogleGenAI({
-        vertexai: true,
-        project: PROJECT_ID,
-        location: LOCATION,
-        credentials: jwtClient
-      });
-      
-      console.log('✅ Google GenAI 초기화 완료');
-    } catch (error) {
-      console.error('❌ Google GenAI 초기화 실패:', error);
-      console.error('에러 상세:', error.message);
-    }
-  } else {
-    console.error('❌ 필수 환경 변수 누락:', {
-      PROJECT_ID: !!PROJECT_ID,
-      GCP_CREDS_BASE64: !!GCP_CREDS_BASE64
+  try {
+    console.log('🔑 Base64 디코딩 시작...');
+    
+    // Base64 디코딩하여 서비스 계정 키 파싱
+    const credentialsJson = Buffer.from(GCP_CREDS_BASE64, 'base64').toString('utf-8');
+    console.log('🔑 Base64 디코딩 완료, JSON 파싱 시작...');
+    
+    const credentials = JSON.parse(credentialsJson);
+    
+    console.log('🔑 서비스 계정 키 디코딩 완료');
+    console.log(`Client Email: ${credentials.client_email}`);
+    console.log(`Project ID from creds: ${credentials.project_id}`);
+    
+    console.log('🔐 JWT 클라이언트 생성 시작...');
+    
+    // JWT 클라이언트 직접 생성
+    const jwtClient = new JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform']
     });
+    
+    console.log('🔐 JWT 클라이언트 생성 완료');
+    
+    console.log('🔐 JWT 인증 시작...');
+    
+    // JWT 토큰 획득 테스트
+    await jwtClient.authorize();
+    console.log('✅ JWT 인증 성공');
+    
+    console.log('🚀 GoogleGenAI 인스턴스 생성 시작...');
+    
+    genAI = new GoogleGenAI({
+      vertexai: true,
+      project: PROJECT_ID,
+      location: LOCATION,
+      credentials: jwtClient
+    });
+    
+    console.log('✅ Google GenAI 초기화 완료');
+  } catch (error) {
+    console.error('❌ Google GenAI 초기화 실패:', error);
+    console.error('에러 상세:', error.message);
+    console.error('에러 스택:', error.stack);
   }
 }
 
@@ -92,9 +111,18 @@ export const handler: Handler = async (event, context) => {
   console.log('GenAI test function called!');
   console.log('Event:', JSON.stringify(event, null, 2));
   console.log('PROJECT_ID exists:', !!PROJECT_ID);
+  console.log('GCP_CREDS_BASE64 exists:', !!GCP_CREDS_BASE64);
   
-  // 초기화 호출 추가!
-  await initializeGenAI();
+  console.log('🚀 initializeGenAI 호출 시작...');
+  
+  try {
+    await initializeGenAI();
+    console.log('✅ initializeGenAI 완료');
+  } catch (error) {
+    console.error('❌ initializeGenAI 에러:', error);
+  }
+  
+  console.log('🔄 CORS 헤더 설정 시작...');
   
   // CORS 헤더 (msds-chemlist와 동일)
   const headers = {
