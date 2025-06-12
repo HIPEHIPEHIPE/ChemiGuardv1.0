@@ -29,6 +29,7 @@ interface NetlifyResponse {
 type Handler = (event: NetlifyEvent, context: NetlifyContext) => Promise<NetlifyResponse>;
 
 import fetch from 'node-fetch';
+import { parseStringPromise } from 'xml2js';
 
 const MSDS_BASE_URL = 'https://msds.kosha.or.kr/openapi/service/msdschem';
 const SERVICE_KEY = process.env.REACT_APP_MSDS_API_KEY;
@@ -108,16 +109,43 @@ export const handler: Handler = async (event, context) => {
     const xmlText = await response.text();
     console.log('MSDS API XML response (first 500 chars):', xmlText.substring(0, 500));
     
-    // XML을 JSON으로 변환하는 간단한 파서
-    // 실제 프로덕션에서는 더 정교한 XML 파서를 사용해야 함
-    return {
-      statusCode: 200,
-      headers: {
-        ...headers,
-        'Content-Type': 'application/xml'
-      },
-      body: xmlText
-    };
+    try {
+      // XML을 JSON으로 변환
+      const jsonData = await parseStringPromise(xmlText, {
+        explicitArray: false,
+        ignoreAttrs: false,
+        mergeAttrs: true
+      });
+      
+      console.log('✅ XML을 JSON으로 변환 완료');
+      
+      // JSON으로 응답
+      return {
+        statusCode: 200,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: true,
+          data: jsonData,
+          source: 'msds-api'
+        })
+      };
+      
+    } catch (xmlParseError) {
+      console.log('⚠️ XML 파싱 실패, 원본 XML 반환');
+      // XML 파싱 실패시 원본 XML 반환
+      return {
+        statusCode: 200,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/xml'
+        },
+        body: xmlText
+      };
+    }
+    
   } catch (error) {
     console.error('MSDS chemlist error:', error);
     return {

@@ -209,13 +209,9 @@ export class MSDSApiService {
         pageNo: pageNo.toString()
       });
 
-      let url: string;
-      if (USE_INDIVIDUAL_FUNCTIONS && process.env.NODE_ENV === 'production') {
-        url = `${INDIVIDUAL_FUNCTIONS_BASE}/chemlist?${params.toString()}`;
-      } else {
-        url = `${PROXY_BASE_URL}/chemlist?${params.toString()}`;
-      }
-      console.log('프록시 서버를 통한 MSDS API 호출:', url);
+      // 생산에서는 netlify.toml 리다이렉트를 통해 개별 함수로 연결
+      const url = `${PROXY_BASE_URL}/chemlist?${params.toString()}`;
+      console.log('MSDS API 호출:', url);
       
       const response = await fetch(url, {
         method: 'GET',
