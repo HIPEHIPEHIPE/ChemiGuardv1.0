@@ -402,6 +402,381 @@ app.get('/api/msds/chemdetail/:detailType', async (req, res) => {
   }
 });
 
+// QA 생성 전용 API
+app.post('/api/gemini/generate-qa', async (req, res) => {
+  try {
+    const { chemical, qaType = 'safety', difficultyLevel = 'general', language = 'ko' } = req.body;
+    
+    if (!chemical) {
+      return res.status(400).json({ error: '화학물질 정보가 필요합니다.' });
+    }
+
+    if (!genAI) {
+      return res.status(500).json({
+        error: 'Google Generative AI 서비스를 사용할 수 없습니다.',
+        details: 'Google GenAI가 초기화되지 않았습니다. 설정을 확인해주세요.'
+      });
+    }
+
+    console.log(`🤖 QA 생성 요청: ${chemical.name} (${qaType}, ${difficultyLevel})`);
+
+    // QA 타입에 따른 전문 프롬프트 생성
+    let specificPrompt = '';
+    const audienceLevel = {
+      general: '일반인',
+      professional: '전문가',
+      expert: '연구자'
+    }[difficultyLevel] || '일반인';
+
+    switch (qaType) {
+      case 'safety':
+        specificPrompt = `화학물질 ${chemical.name}에 대한 안전성 관련 Q&A를 생성해주세요.
+
+화학물질 정보:
+- 물질명: ${chemical.name}
+- CAS 번호: ${chemical.casNumber || '정보 없음'}
+- 분자식: ${chemical.molecularFormula || '정보 없음'}
+- 위험성 분류: ${chemical.hazardClass || '정보 없음'}
+- LD50: ${chemical.ld50_value || '정보 없음'}
+- GHS 분류: ${chemical.ghs_codes?.join(', ') || '정보 없음'}
+
+작성 지침:
+- 대상: ${audienceLevel}
+- 질문은 실제 사용자가 안전성에 대해 궁금해할 만한 내용
+- 답변은 정확하고 실용적인 안전 정보 제공
+- ${difficultyLevel === 'general' ? '이해하기 쉬운 언어' : '전문적이고 기술적인 내용'}로 작성
+
+다음 JSON 형식으로 응답해주세요:
+{
+  "question": "구체적이고 실용적인 안전성 질문",
+  "answer": "상세하고 유용한 안전 정보 및 주의사항"
+}`;
+        break;
+
+      case 'usage':
+        specificPrompt = `화학물질 ${chemical.name}에 대한 사용법 관련 Q&A를 생성해주세요.
+
+화학물질 정보:
+- 물질명: ${chemical.name}
+- 용도: ${chemical.usage || '정보 없음'}
+- 함량: ${chemical.content_percentage || '정보 없음'}
+- 제품명: ${chemical.product_name || '정보 없음'}
+
+작성 지침:
+- 대상: ${audienceLevel}
+- 질문은 제품 사용 시 실제로 도움이 되는 내용
+- 답변은 단계별 사용법과 주의사항 포함
+- ${difficultyLevel === 'general' ? '일반 사용자가 쉽게 따라할 수 있는' : '전문적이고 정확한'} 내용
+
+다음 JSON 형식으로 응답해주세요:
+{
+  "question": "실용적인 사용법 질문",
+  "answer": "단계별 사용법 및 주의사항"
+}`;
+        break;
+
+      case 'component':
+        specificPrompt = `화학물질 ${chemical.name}에 대한 성분 정보 관련 Q&A를 생성해주세요.
+
+화학물질 정보:
+- 물질명: ${chemical.name}
+- CAS 번호: ${chemical.casNumber || '정보 없음'}
+- 분자식: ${chemical.molecularFormula || '정보 없음'}
+- 분자량: ${chemical.molecularWeight || '정보 없음'}
+- 물리적 상태: ${chemical.physicalState || '정보 없음'}
+
+작성 지침:
+- 대상: ${audienceLevel}
+- 질문은 화학물질의 특성이나 성분에 대한 궁금증
+- 답변은 화학적 특성과 제품 내 역할 포함
+- ${difficultyLevel === 'general' ? '일반인이 이해할 수 있는' : '전문적이고 과학적인'} 설명
+
+다음 JSON 형식으로 응답해주세요:
+{
+  "question": "성분 특성이나 역할에 대한 질문",
+  "answer": "화학적 특성과 제품 내 기능 설명"
+}`;
+        break;
+
+      case 'regulation':
+        specificPrompt = `화학물질 ${chemical.name}에 대한 규제 정보 관련 Q&A를 생성해주세요.
+
+화학물질 정보:
+- 물질명: ${chemical.name}
+- GHS 분류: ${chemical.ghs_codes?.join(', ') || '정보 없음'}
+- 위험 등급: ${chemical.hazardClass || '정보 없음'}
+
+작성 지침:
+- 대상: ${audienceLevel}
+- 질문은 법적 규제나 관리 기준에 대한 내용
+- 답변은 국내 법규와 관리 방안 포함
+- ${difficultyLevel === 'general' ? '일반인도 알아야 할 기본적인' : '상세하고 전문적인'} 규제 정보
+
+다음 JSON 형식으로 응답해주세요:
+{
+  "question": "규제나 법적 기준에 대한 질문",
+  "answer": "관련 법규와 관리 기준 설명"
+}`;
+        break;
+
+      default:
+        specificPrompt = `화학물질 ${chemical.name}에 대한 Q&A를 생성해주세요.`;
+    }
+
+    const apiRequest = {
+      model: 'gemini-2.5-pro-preview-06-05',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: specificPrompt }]
+        }
+      ],
+      config: {
+        maxOutputTokens: 8192,
+        temperature: 0.7,
+        topP: 0.9,
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'OFF',
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            threshold: 'OFF',
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            threshold: 'OFF',
+          },
+          {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'OFF',
+          }
+        ]
+      }
+    };
+
+    console.log('🚀 Google GenAI QA 생성 요청 전송 중...');
+    const streamingResp = await genAI.models.generateContentStream(apiRequest);
+    
+    let responseText = '';
+    for await (const chunk of streamingResp) {
+      if (chunk.text) {
+        responseText += chunk.text;
+      }
+    }
+    
+    console.log('✅ QA 생성 완료 - 응답 길이:', responseText.length);
+    
+    // JSON 파싱 시도
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(responseText.trim());
+    } catch (parseError) {
+      console.log('⚠️ JSON 파싱 실패, 텍스트로 처리');
+      parsedResponse = {
+        question: `${chemical.name}에 대한 ${qaType} 관련 질문`,
+        answer: responseText.trim()
+      };
+    }
+    
+    return res.json({
+      success: true,
+      result: parsedResponse,
+      metadata: {
+        chemical: chemical.name,
+        qaType,
+        difficultyLevel,
+        generatedAt: new Date().toISOString(),
+        model: 'gemini-2.5-pro'
+      },
+      source: 'google-generative-ai'
+    });
+
+  } catch (error) {
+    console.error('💥 QA 생성 오류:', error);
+    res.status(500).json({
+      error: 'QA 생성 중 오류가 발생했습니다.',
+      details: error.message
+    });
+  }
+});
+
+// 질문만 생성하는 API
+app.post('/api/gemini/generate-question', async (req, res) => {
+  try {
+    const { chemical, qaType = 'safety', difficultyLevel = 'general', language = 'ko' } = req.body;
+    
+    if (!chemical) {
+      return res.status(400).json({ error: '화학물질 정보가 필요합니다.' });
+    }
+
+    if (!genAI) {
+      return res.status(500).json({
+        error: 'Google Generative AI 서비스를 사용할 수 없습니다.',
+        details: 'Google GenAI가 초기화되지 않았습니다.'
+      });
+    }
+
+    console.log(`❓ 질문 생성 요청: ${chemical.name} (${qaType})`);
+
+    const audienceLevel = {
+      general: '일반인',
+      professional: '전문가',
+      expert: '연구자'
+    }[difficultyLevel] || '일반인';
+
+    const questionPrompt = `화학물질 "${chemical.name}"에 대한 ${qaType === 'safety' ? '안전성' : qaType === 'usage' ? '사용법' : qaType === 'component' ? '성분 정보' : '규제 정보'} 관련 질문을 하나 생성해주세요.
+
+화학물질 정보:
+- 이름: ${chemical.name}
+- CAS 번호: ${chemical.casNumber || '정보 없음'}
+- 용도: ${chemical.usage || '정보 없음'}
+
+질문은 ${audienceLevel}이 궁금해할 만한 실용적인 내용이어야 합니다.
+질문만 반환해주세요 (다른 텍스트는 포함하지 마세요).`;
+
+    const apiRequest = {
+      model: 'gemini-2.5-pro-preview-06-05',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: questionPrompt }]
+        }
+      ],
+      config: {
+        maxOutputTokens: 1024,
+        temperature: 0.8,
+        topP: 0.9
+      }
+    };
+
+    const streamingResp = await genAI.models.generateContentStream(apiRequest);
+    
+    let responseText = '';
+    for await (const chunk of streamingResp) {
+      if (chunk.text) {
+        responseText += chunk.text;
+      }
+    }
+    
+    console.log('✅ 질문 생성 완료');
+    
+    return res.json({
+      success: true,
+      result: {
+        question: responseText.trim()
+      },
+      source: 'google-generative-ai'
+    });
+
+  } catch (error) {
+    console.error('💥 질문 생성 오류:', error);
+    res.status(500).json({
+      error: '질문 생성 중 오류가 발생했습니다.',
+      details: error.message
+    });
+  }
+});
+
+// 답변만 생성하는 API
+app.post('/api/gemini/generate-answer', async (req, res) => {
+  try {
+    const { chemical, question, qaType = 'safety', difficultyLevel = 'general', language = 'ko' } = req.body;
+    
+    if (!chemical || !question) {
+      return res.status(400).json({ error: '화학물질 정보와 질문이 필요합니다.' });
+    }
+
+    if (!genAI) {
+      return res.status(500).json({
+        error: 'Google Generative AI 서비스를 사용할 수 없습니다.',
+        details: 'Google GenAI가 초기화되지 않았습니다.'
+      });
+    }
+
+    console.log(`💬 답변 생성 요청: ${chemical.name}, 질문: ${question.substring(0, 50)}...`);
+
+    const audienceLevel = {
+      general: '일반인',
+      professional: '전문가',
+      expert: '연구자'
+    }[difficultyLevel] || '일반인';
+
+    const answerPrompt = `다음 질문에 대해 ${audienceLevel}을 대상으로 정확하고 유용한 답변을 작성해주세요.
+
+질문: ${question}
+
+화학물질 정보:
+- 이름: ${chemical.name}
+- CAS 번호: ${chemical.casNumber || '정보 없음'}
+- 분자식: ${chemical.molecularFormula || '정보 없음'}
+- 용도: ${chemical.usage || '정보 없음'}
+- LD50: ${chemical.ld50_value || '정보 없음'}
+- GHS 분류: ${chemical.ghs_codes?.join(', ') || '정보 없음'}
+- 위험 등급: ${chemical.hazardClass || '정보 없음'}
+- 제품 내 함량: ${chemical.content_percentage || '정보 없음'}
+
+작성 지침:
+- ${difficultyLevel === 'general' ? '이해하기 쉽고 실용적인' : '전문적이고 정확한'} 답변을 작성해주세요.
+- 제공된 화학물질 정보를 기반으로 답변하세요.
+- 안전 관련 내용은 반드시 포함해주세요.
+- 3-5문단으로 구성해주세요.
+
+답변만 반환해주세요.`;
+
+    const apiRequest = {
+      model: 'gemini-2.5-pro-preview-06-05',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: answerPrompt }]
+        }
+      ],
+      config: {
+        maxOutputTokens: 4096,
+        temperature: 0.5,
+        topP: 0.9
+      }
+    };
+
+    const streamingResp = await genAI.models.generateContentStream(apiRequest);
+    
+    let responseText = '';
+    for await (const chunk of streamingResp) {
+      if (chunk.text) {
+        responseText += chunk.text;
+      }
+    }
+    
+    console.log('✅ 답변 생성 완료');
+    
+    return res.json({
+      success: true,
+      result: {
+        answer: responseText.trim()
+      },
+      source: 'google-generative-ai'
+    });
+
+  } catch (error) {
+    console.error('💥 답변 생성 오류:', error);
+    res.status(500).json({
+      error: '답변 생성 중 오류가 발생했습니다.',
+      details: error.message
+    });
+  }
+});
+// API 상태 확인 엔드포인트
+app.get('/api/gemini/status', (req, res) => {
+  res.json({
+    success: true,
+    genAI: !!genAI,
+    timestamp: new Date().toISOString(),
+    model: 'gemini-2.5-pro-preview-06-05'
+  });
+});
+
 // 정적 파일 서빙 (React 빌드 파일)
 app.use(express.static(path.join(__dirname, '../build')));
 

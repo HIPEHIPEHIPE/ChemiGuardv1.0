@@ -1,0 +1,505 @@
+/* src/styles/QAManager.css - Q&A 관리 컴포넌트 스타일 */
+
+.qa-manager {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.qa-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.qa-manager-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.qa-stats {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.qa-controls {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: end;
+}
+
+.search-section {
+  grid-column: 1 / -1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.filter-section {
+  display: flex;
+  gap: 10px;
+}
+
+.filter-select, .sort-select {
+  padding: 10px;
+  border: 2px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background-color: white;
+  min-width: 150px;
+  transition: border-color 0.3s ease;
+}
+
+.filter-select:focus, .sort-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.action-section {
+  display: flex;
+  gap: 10px;
+}
+
+.export-button, .refresh-button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.export-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.export-button:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.export-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.refresh-button {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.refresh-button:hover {
+  background-color: #138496;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.qa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.no-qa-message {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+  background-color: white;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.no-qa-message p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.qa-item {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.qa-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.qa-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.qa-metadata {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.chemical-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.category-tag {
+  background-color: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.date-info {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.qa-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.qa-actions button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.edit-button {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.edit-button:hover {
+  background-color: #e0a800;
+  transform: translateY(-1px);
+}
+
+.select-button {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.select-button:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+.save-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.cancel-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #545b62;
+  transform: translateY(-1px);
+}
+
+.qa-content {
+  padding: 20px;
+}
+
+.question-section, .answer-section {
+  margin-bottom: 20px;
+}
+
+.question-section:last-child, .answer-section:last-child {
+  margin-bottom: 0;
+}
+
+.question-section h5, .answer-section h5 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.question-text {
+  background-color: #e7f3ff;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.answer-text {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.edit-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.edit-textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.qa-item-footer {
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+.technical-info {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.technical-info span {
+  display: flex;
+  align-items: center;
+}
+
+/* 삭제 확인 모달 */
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-confirm-modal {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.delete-confirm-modal h4 {
+  margin: 0 0 15px 0;
+  color: #dc3545;
+}
+
+.delete-confirm-modal p {
+  margin: 10px 0;
+  color: #495057;
+}
+
+.delete-warning {
+  color: #dc3545;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.confirm-delete-button {
+  background-color: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-delete-button:hover {
+  background-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.cancel-delete-button {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-delete-button:hover {
+  background-color: #545b62;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .qa-manager {
+    padding: 15px;
+  }
+  
+  .qa-manager-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .qa-controls {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .filter-section {
+    flex-direction: column;
+  }
+  
+  .action-section {
+    flex-direction: column;
+  }
+  
+  .qa-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .qa-metadata {
+    width: 100%;
+  }
+  
+  .qa-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .technical-info {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .delete-confirm-modal {
+    margin: 20px;
+  }
+  
+  .delete-confirm-actions {
+    flex-direction: column;
+  }
+}
+
+/* 접근성 개선 */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* 애니메이션 최적화 */
+@media (prefers-reduced-motion: reduce) {
+  .qa-item,
+  .qa-actions button {
+    transition: none;
+  }
+  
+  .qa-item:hover {
+    transform: none;
+  }
+  
+  .qa-actions button:hover {
+    transform: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .qa-item {
+    border: 2px solid #000;
+  }
+  
+  .category-tag {
+    border: 1px solid #000;
+  }
+  
+  .question-text,
+  .answer-text {
+    border: 1px solid #000;
+  }
+}

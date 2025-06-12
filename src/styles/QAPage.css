@@ -1,0 +1,474 @@
+/* src/styles/QAPage.css - Q&A 페이지 통합 스타일 */
+
+.qa-page {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  padding: 20px;
+}
+
+.qa-page-header {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.qa-page-title {
+  padding: 30px 40px 20px 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-align: center;
+}
+
+.qa-page-title h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.qa-page-title p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.qa-page-nav {
+  display: flex;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+.nav-tab {
+  flex: 1;
+  padding: 15px 20px;
+  border: none;
+  background-color: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-tab:hover {
+  background-color: #e9ecef;
+}
+
+.nav-tab.active {
+  background-color: white;
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.generator-section,
+.manager-section {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 화학물질 미선택 상태 */
+.chemical-selector-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.no-chemical-message {
+  text-align: center;
+  padding: 60px 40px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px dashed #dee2e6;
+}
+
+.no-chemical-message h3 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 1.5rem;
+}
+
+.no-chemical-message p {
+  margin: 0 0 25px 0;
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+.select-chemical-button {
+  padding: 15px 30px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.select-chemical-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
+}
+
+/* 화학물질 선택됨 상태 */
+.generator-content {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.current-chemical-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.chemical-info-brief h3 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+}
+
+.selected-qa-info {
+  margin-top: 10px;
+}
+
+.qa-badge {
+  display: inline-block;
+  background-color: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.selected-question {
+  margin: 5px 0 0 0;
+  font-size: 0.95rem;
+  color: #495057;
+  font-style: italic;
+  max-width: 600px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change-chemical-button {
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.change-chemical-button:hover {
+  background-color: #545b62;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* 화학물질 선택 모달 */
+.chemical-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.chemical-selector-modal {
+  background-color: white;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.4rem;
+}
+
+.close-modal-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.close-modal-button:hover {
+  background-color: #dee2e6;
+}
+
+.modal-content {
+  flex: 1;
+  padding: 20px 30px;
+  overflow-y: auto;
+}
+
+.chemical-search {
+  margin-bottom: 20px;
+}
+
+.chemical-search-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.chemical-search-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.chemical-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chemical-item {
+  padding: 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chemical-item:hover {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
+}
+
+.chemical-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.chemical-cas,
+.chemical-formula {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 3px;
+}
+
+.chemical-usage {
+  font-size: 0.85rem;
+  color: #495057;
+  line-height: 1.4;
+}
+
+.modal-footer {
+  padding: 15px 30px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  border-radius: 0 0 12px 12px;
+}
+
+.modal-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* 선택된 Q&A 오버레이 */
+.selected-qa-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.selected-qa-banner {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  pointer-events: auto;
+}
+
+.qa-info {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.clear-selection-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-selection-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .qa-page {
+    padding: 10px;
+  }
+  
+  .qa-page-title {
+    padding: 20px 25px 15px 25px;
+  }
+  
+  .qa-page-title h1 {
+    font-size: 1.8rem;
+  }
+  
+  .qa-page-title p {
+    font-size: 1rem;
+  }
+  
+  .nav-tab {
+    padding: 12px 15px;
+    font-size: 0.95rem;
+  }
+  
+  .current-chemical-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .selected-question {
+    max-width: none;
+    white-space: normal;
+  }
+  
+  .chemical-selector-overlay {
+    padding: 10px;
+  }
+  
+  .modal-header,
+  .modal-content,
+  .modal-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  
+  .selected-qa-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .chemical-search-input {
+    font-size: 16px; /* iOS에서 줌 방지 */
+  }
+}
+
+/* 로딩 및 상태 표시 */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 접근성 개선 */
+.nav-tab:focus-visible,
+.select-chemical-button:focus-visible,
+.change-chemical-button:focus-visible,
+.close-modal-button:focus-visible,
+.clear-selection-button:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .qa-page-header,
+  .generator-content,
+  .chemical-selector-modal {
+    border: 2px solid #000;
+  }
+  
+  .chemical-item {
+    border-color: #000;
+  }
+  
+  .nav-tab.active {
+    border-bottom-color: #000;
+  }
+}
+
+/* 애니메이션 최적화 */
+@media (prefers-reduced-motion: reduce) {
+  .select-chemical-button:hover,
+  .change-chemical-button:hover,
+  .chemical-item:hover {
+    transform: none;
+  }
+  
+  .loading-spinner {
+    animation: none;
+  }
+}

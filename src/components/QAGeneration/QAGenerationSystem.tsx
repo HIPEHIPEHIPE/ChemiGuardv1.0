@@ -1,6 +1,7 @@
 // src/components/QAGeneration/QAGenerationSystem.tsx
 import React, { useState, CSSProperties } from 'react';
 import { ChemicalData } from '../../types/qaGeneration';
+import { generateQA, generateQuestion, generateAnswer, saveQA, GeneratedQA } from '../../api/qaGeneration';
 
 // --- 스타일 정의 ---
 const systemContainerStyle: CSSProperties = {
@@ -115,7 +116,44 @@ const guideTextStyle: CSSProperties = {
   marginBottom: '10px',
 };
 
-const btnStyle = (variant: 'primary' | 'secondary' | 'success' | 'danger', customStyle?: CSSProperties): CSSProperties => {
+const messageBoxStyle = (type: 'success' | 'error' | 'info'): CSSProperties => {
+  const colors = {
+    success: { bg: '#d1fae5', border: '#10b981', text: '#047857' },
+    error: { bg: '#fee2e2', border: '#ef4444', text: '#dc2626' },
+    info: { bg: '#dbeafe', border: '#3b82f6', text: '#1d4ed8' }
+  };
+  
+  return {
+    background: colors[type].bg,
+    border: `1px solid ${colors[type].border}`,
+    borderRadius: '6px',
+    padding: '10px',
+    marginBottom: '15px',
+    color: colors[type].text,
+    fontSize: '14px',
+  };
+};
+
+const loadingOverlayStyle: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'rgba(255, 255, 255, 0.9)',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: '8px',
+  zIndex: 10,
+};
+
+const btnStyle = (
+  variant: 'primary' | 'secondary' | 'success' | 'danger',
+  isHovered: boolean,
+  customStyle?: CSSProperties
+): CSSProperties => {
   const baseStyle: CSSProperties = {
     border: 'none',
     borderRadius: '6px',
@@ -125,17 +163,21 @@ const btnStyle = (variant: 'primary' | 'secondary' | 'success' | 'danger', custo
     color: 'white',
     fontWeight: 500,
     marginRight: '10px',
+    position: 'relative',
+    transition: 'all 0.2s ease',
   };
 
-  let colorStyle: CSSProperties = {};
-  switch (variant) {
-    case 'primary': colorStyle = { backgroundColor: '#3b82f6' }; break;
-    case 'secondary': colorStyle = { backgroundColor: '#6b7280' }; break;
-    case 'success': colorStyle = { backgroundColor: '#10b981' }; break;
-    case 'danger': colorStyle = { backgroundColor: '#ef4444' }; break;
-  }
+  const colorMap = {
+    primary: ['#3b82f6', '#2563eb'],
+    secondary: ['#6b7280', '#4b5563'],
+    success: ['#10b981', '#059669'],
+    danger: ['#ef4444', '#dc2626']
+  };
 
-  return { ...baseStyle, ...colorStyle, ...customStyle };
+  const [defaultColor, hoverColor] = colorMap[variant];
+  const backgroundColor = isHovered ? hoverColor : defaultColor;
+
+  return { ...baseStyle, backgroundColor, ...customStyle };
 };
 
 const infoGroupStyle: CSSProperties = {
@@ -179,6 +221,10 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
   const [answerText, setAnswerText] = useState('');
   const [qaType, setQaType] = useState('safety');
   const [difficultyLevel, setDifficultyLevel] = useState('general');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const tabs = [
     { id: 'qa-setup', label: '❓ Q&A 생성' },
@@ -186,6 +232,166 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
     { id: 'toxicity-data', label: '⚠️ 독성 정보' },
     { id: 'regulation-info', label: '📜 규제 정보' },
   ];
+
+  // 실제 AI API 호출 함수들
+  const handleGenerateFullQA = async () => {
+    if (!selectedChemical) return;
+    
+    setIsLoading(true);
+    setLoadingMessage('AI가 Q&A를 생성하고 있습니다...');
+    setErrorMessage('');
+    setSuccessMessage('');
+    
+    try {
+      const response = await generateQA({
+        chemical: selectedChemical,
+        questionType: qaType as 'safety' | 'usage' | 'component' | 'regulation',
+        difficultyLevel: difficultyLevel as 'general' | 'professional' | 'expert',
+        language: 'ko'
+      });
+      
+      if (response.success && response.result) {
+        setQuestionText(response.result.question);
+        setAnswerText(response.result.answer);
+        setSuccessMessage('Q&A가 성공적으로 생성되었습니다!');
+      } else {
+        throw new Error(response.error || 'Q&A 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Q&A 생성 오류:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Q&A 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage('');
+    }
+  };
+
+  const handleGenerateQuestion = async () => {
+    if (!selectedChemical) return;
+    
+    setIsLoading(true);
+    setLoadingMessage('AI가 질문을 생성하고 있습니다...');
+    setErrorMessage('');
+    setSuccessMessage('');
+    
+    try {
+      const response = await generateQuestion(
+        selectedChemical,
+        qaType,
+        difficultyLevel,
+        'ko'
+      );
+      
+      if (response.success && response.result) {
+        setQuestionText(response.result.question);
+        setSuccessMessage('질문이 성공적으로 생성되었습니다!');
+      } else {
+        throw new Error(response.error || '질문 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('질문 생성 오류:', error);
+      setErrorMessage(error instanceof Error ? error.message : '질문 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage('');
+    }
+  };
+
+  const handleGenerateAnswer = async () => {
+    if (!selectedChemical || !questionText.trim()) {
+      setErrorMessage('질문을 먼저 입력해주세요.');
+      return;
+    }
+    
+    setIsLoading(true);
+    setLoadingMessage('AI가 답변을 생성하고 있습니다...');
+    setErrorMessage('');
+    setSuccessMessage('');
+    
+    try {
+      const response = await generateAnswer(
+        selectedChemical,
+        questionText,
+        qaType,
+        difficultyLevel,
+        'ko'
+      );
+      
+      if (response.success && response.result) {
+        setAnswerText(response.result.answer);
+        setSuccessMessage('답변이 성공적으로 생성되었습니다!');
+      } else {
+        throw new Error(response.error || '답변 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('답변 생성 오류:', error);
+      setErrorMessage(error instanceof Error ? error.message : '답변 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage('');
+    }
+  };
+
+  const handleSaveQA = () => {
+    if (!selectedChemical || !questionText.trim() || !answerText.trim()) {
+      setErrorMessage('질문과 답변을 모두 입력해주세요.');
+      return;
+    }
+    
+    try {
+      const newQA: GeneratedQA = {
+        id: `qa_${Date.now()}_${selectedChemical.id}`,
+        question: questionText,
+        answer: answerText,
+        category: qaType,
+        sourceData: selectedChemical,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          model: 'gemini-2.5-pro',
+          temperature: 0.7,
+          dataSource: selectedChemical.id,
+          questionType: qaType,
+          targetAudience: difficultyLevel
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      saveQA(newQA);
+      setSuccessMessage('Q&A가 성공적으로 저장되었습니다!');
+      
+      // 저장 후 폼 초기화
+      setTimeout(() => {
+        setQuestionText('');
+        setAnswerText('');
+        setSuccessMessage('');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Q&A 저장 오류:', error);
+      setErrorMessage('Q&A 저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 메시지 자동 해제
+  React.useEffect(() => {
+    if (successMessage || errorMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+        setErrorMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, errorMessage]);
+
+  // 버튼 hover 상태 관리 (상단으로 이동)
+  const [hoverSave, setHoverSave] = useState(false);
+  const [hoverSaveNext, setHoverSaveNext] = useState(false);
+  const [hoverFullQA, setHoverFullQA] = useState(false);
+  const [hoverQuestion, setHoverQuestion] = useState(false);
+  const [hoverAnswer, setHoverAnswer] = useState(false);
+  const [hoverQASave, setHoverQASave] = useState(false);
+  const [hoverAIDo, setHoverAIDo] = useState(false);
 
   if (!selectedChemical) {
     return (
@@ -198,36 +404,63 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
     );
   }
 
-  const handleGenerateQA = () => {
-    // AI 기반 Q&A 생성 로직
-    const sampleQuestions = [
-      `${selectedChemical.name}과 다른 성분을 함께 사용해도 안전한가요?`,
-      `${selectedChemical.name}의 독성 수준은 어느 정도인가요?`,
-      `${selectedChemical.name}이 포함된 제품 사용 시 주의사항은 무엇인가요?`,
-      `${selectedChemical.name}의 환경 영향은 어떤가요?`,
-    ];
-    
-    const randomQuestion = sampleQuestions[Math.floor(Math.random() * sampleQuestions.length)];
-    setQuestionText(randomQuestion);
-    
-    // 답변 생성 (실제로는 AI API 호출)
-    const sampleAnswer = `${selectedChemical.name}(CAS: ${selectedChemical.casNumber})은 ${selectedChemical.usage}로 사용되는 화학물질입니다. LD50 값은 ${selectedChemical.ld50_value}이며, 이는 급성 독성 수준을 나타냅니다. 사용 시에는 해당 제품의 라벨에 표시된 안전수칙을 반드시 준수하고, 필요시 전문가와 상담하는 것이 좋습니다.`;
-    setAnswerText(sampleAnswer);
-  };
-
   return (
     <div style={systemContainerStyle}>
       {/* 메인 콘텐츠 */}
-      <div style={mainContentStyle}>
+      <div style={{ ...mainContentStyle, position: 'relative' }}>
+        {/* 로딩 오버레이 */}
+        {isLoading && (
+          <div style={loadingOverlayStyle}>
+            <div style={{ fontSize: '24px', marginBottom: '10px' }}>🤖</div>
+            <div style={{ fontSize: '16px', fontWeight: 500, marginBottom: '10px' }}>
+              {loadingMessage}
+            </div>
+            <div style={{ 
+              border: '2px solid #f3f4f6', 
+              borderTop: '2px solid #3b82f6', 
+              borderRadius: '50%', 
+              width: '20px', 
+              height: '20px', 
+              animation: 'spin 1s linear infinite' 
+            }} />
+          </div>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600 }}>
             Q&A 생성: {selectedChemical.name} ({selectedChemical.casNumber})
           </h2>
           <div>
-            <button style={btnStyle('primary')}>임시 저장</button>
-            <button style={btnStyle('success')}>저장 후 다음</button>
+            <button
+              style={btnStyle('primary', hoverSave)}
+              onClick={handleSaveQA}
+              onMouseEnter={() => setHoverSave(true)}
+              onMouseLeave={() => setHoverSave(false)}
+            >
+              💾 임시 저장
+            </button>
+            <button
+              style={btnStyle('success', hoverSaveNext)}
+              onClick={handleSaveQA}
+              onMouseEnter={() => setHoverSaveNext(true)}
+              onMouseLeave={() => setHoverSaveNext(false)}
+            >
+              ✅ 저장 후 다음
+            </button>
           </div>
         </div>
+
+        {/* 메시지 표시 */}
+        {successMessage && (
+          <div style={messageBoxStyle('success')}>
+            ✅ {successMessage}
+          </div>
+        )}
+        {errorMessage && (
+          <div style={messageBoxStyle('error')}>
+            ❌ {errorMessage}
+          </div>
+        )}
 
         <div style={tabsContainerStyle}>
           {tabs.map(tab => (
@@ -264,6 +497,18 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
                 </select>
               </div>
             </div>
+            
+            <div style={{ marginBottom: '15px' }}>
+            <button
+              style={btnStyle('primary', hoverFullQA)}
+              onClick={handleGenerateFullQA}
+              disabled={isLoading}
+              onMouseEnter={() => setHoverFullQA(true)}
+              onMouseLeave={() => setHoverFullQA(false)}
+            >
+              🤖 AI 전체 Q&A 생성
+            </button>
+            </div>
           </div>
 
           <div style={{ marginBottom: '20px' }}>
@@ -279,8 +524,17 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
               placeholder="질문을 입력하거나 AI 생성 버튼을 클릭하세요"
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
+              disabled={isLoading}
             />
-
+            <button
+              style={btnStyle('secondary', hoverQuestion)}
+              onClick={handleGenerateQuestion}
+              disabled={isLoading}
+              onMouseEnter={() => setHoverQuestion(true)}
+              onMouseLeave={() => setHoverQuestion(false)}
+            >
+              ❓ AI 질문 생성
+            </button>
           </div>
 
           <div style={{ marginBottom: '20px' }}>
@@ -296,9 +550,26 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
               placeholder="AI가 생성한 답변이 여기에 표시됩니다"
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
+              disabled={isLoading}
             />
-            <button style={btnStyle('primary')}>🤖 AI 답변 생성</button>
-            <button style={btnStyle('success')}>💾 Q&A 저장</button>
+            <button
+              style={btnStyle('primary', hoverAnswer)}
+              onClick={handleGenerateAnswer}
+              disabled={isLoading || !questionText.trim()}
+              onMouseEnter={() => setHoverAnswer(true)}
+              onMouseLeave={() => setHoverAnswer(false)}
+            >
+              🤖 AI 답변 생성
+            </button>
+            <button
+              style={btnStyle('success', hoverQASave)}
+              onClick={handleSaveQA}
+              disabled={isLoading || !questionText.trim() || !answerText.trim()}
+              onMouseEnter={() => setHoverQASave(true)}
+              onMouseLeave={() => setHoverQASave(false)}
+            >
+              💾 Q&A 저장
+            </button>
           </div>
         </div>
 
@@ -396,16 +667,33 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
         <div style={cardStyle}>
           <h4 style={cardTitleStyle}>AI 작업 도우미</h4>
           <div style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.6, marginBottom: '15px' }}>
-            - 질문 자동 생성<br />
-            - 전문 답변 작성<br />
-            - 안전성 정보 요약<br />
-            - 사용법 안내 생성
+            현재 사용 가능한 AI 기능:<br />
+            ✅ 질문 자동 생성<br />
+            ✅ 전문 답변 작성<br />
+            ✅ 안전성 정보 요약<br />
+            ✅ 사용법 안내 생성
           </div>
-          <button style={btnStyle('success', { width: '100%', marginRight: 0 })}>
+          <button
+            style={btnStyle('success', hoverAIDo, { width: '100%', marginRight: 0 })}
+            onClick={handleGenerateFullQA}
+            disabled={isLoading}
+            onMouseEnter={() => setHoverAIDo(true)}
+            onMouseLeave={() => setHoverAIDo(false)}
+          >
             🤖 AI 도우미 시작
           </button>
         </div>
       </div>
+
+      {/* CSS 애니메이션 */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 };

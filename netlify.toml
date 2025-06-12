@@ -1,0 +1,25 @@
+[build]
+  functions = "netlify/functions"
+  publish = "build"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
+
+# Environment variables are set in Netlify dashboard
+# Required environment variables:
+# - REACT_APP_MSDS_API_KEY
+# - REACT_APP_GEMINI_API_KEY  
+# - GCP_PROJECT_ID
+# - GCP_LOCATION (optional, defaults to 'global')
+# - GCP_CREDS_BASE64 (base64 encoded service account JSON)

@@ -1,0 +1,418 @@
+/* src/styles/QAGenerator.css - QA 생성기 스타일 */
+
+.qa-generator {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.qa-generator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.qa-generator-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.api-status {
+  font-size: 0.9rem;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background-color: #e9ecef;
+}
+
+.chemical-info {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #007bff;
+}
+
+.chemical-info h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+}
+
+.chemical-details p {
+  margin: 5px 0;
+  font-size: 0.95rem;
+}
+
+.chemical-details strong {
+  color: #2c3e50;
+}
+
+.generation-controls {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.generation-controls h4 {
+  margin: 0 0 15px 0;
+  color: #495057;
+}
+
+.control-group {
+  margin-bottom: 15px;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.control-group select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background-color: white;
+  transition: border-color 0.3s ease;
+}
+
+.control-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.control-group select:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.generation-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.primary-button {
+  flex: 1;
+  padding: 12px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.primary-button:hover:not(:disabled) {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.primary-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.secondary-button {
+  flex: 1;
+  padding: 12px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background-color: #545b62;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+.secondary-button:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.advanced-controls {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.advanced-controls h5 {
+  margin: 0 0 15px 0;
+  color: #495057;
+}
+
+.advanced-controls textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.advanced-controls textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.advanced-controls textarea:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.advanced-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.reset-button {
+  padding: 10px 15px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-button:hover:not(:disabled) {
+  background-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.reset-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.generated-qa {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid #28a745;
+  margin-bottom: 20px;
+}
+
+.generated-qa h4 {
+  margin: 0 0 20px 0;
+  color: #28a745;
+}
+
+.qa-item {
+  margin-bottom: 20px;
+}
+
+.question-section, .answer-section {
+  margin-bottom: 20px;
+}
+
+.question-section h5, .answer-section h5 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 1.1rem;
+}
+
+.question-content {
+  background-color: #e7f3ff;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.answer-content {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.answer-content p {
+  margin: 0 0 10px 0;
+}
+
+.answer-content p:last-child {
+  margin-bottom: 0;
+}
+
+.qa-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #dee2e6;
+}
+
+.copy-button, .regenerate-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.copy-button {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.copy-button:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
+}
+
+.regenerate-button {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.regenerate-button:hover:not(:disabled) {
+  background-color: #e0a800;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.regenerate-button:disabled {
+  background-color: #6c757d;
+  color: white;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.api-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.api-warning p {
+  margin: 5px 0;
+  color: #856404;
+}
+
+.qa-generator-placeholder {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  background-color: white;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .qa-generator {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  .qa-generator-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .generation-buttons {
+    flex-direction: column;
+  }
+  
+  .advanced-buttons {
+    flex-direction: column;
+  }
+  
+  .qa-actions {
+    flex-direction: column;
+  }
+  
+  .control-group select,
+  .advanced-controls textarea {
+    font-size: 16px; /* iOS에서 줌 방지 */
+  }
+}
+
+/* 로딩 상태 애니메이션 */
+.primary-button:disabled::after {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  border: 2px solid transparent;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 포커스 접근성 개선 */
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .qa-generator {
+    border: 2px solid #000;
+  }
+  
+  .chemical-info,
+  .generation-controls,
+  .generated-qa {
+    border: 1px solid #000;
+  }
+}
