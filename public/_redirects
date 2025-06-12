@@ -1,5 +1,6 @@
 # 개별 함수에 대한 직접 리다이렉트
 /api/msds/chemlist  /.netlify/functions/msds-chemlist  200
+/api/genai-test  /.netlify/functions/genai-test  200
 /api/test  /.netlify/functions/test  200
 /api/env-check  /.netlify/functions/env-check  200
 

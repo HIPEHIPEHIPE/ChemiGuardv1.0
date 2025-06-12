@@ -579,6 +579,27 @@ app.get('/gemini/status', (req: Request, res: Response) => {
   });
 });
 
+// 환경변수 디버깅 엔드포인트
+app.get('/debug-env', (req: Request, res: Response) => {
+  console.log('🔍 환경변수 디버깅');
+  
+  const envVars = {
+    NODE_ENV: process.env.NODE_ENV,
+    GCP_PROJECT_ID: process.env.GCP_PROJECT_ID ? '✅ 설정됨' : '❌ 누락',
+    GCP_LOCATION: process.env.GCP_LOCATION || 'undefined',
+    REACT_APP_MSDS_API_KEY: process.env.REACT_APP_MSDS_API_KEY ? '✅ 설정됨' : '❌ 누락',
+    GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS ? '✅ 설정됨' : '❌ 누락'
+  };
+  
+  console.log('환경변수 상태:', envVars);
+  
+  return res.json({
+    success: true,
+    environmentVariables: envVars,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // GenAI 테스트 엔드포인트 추가
 app.get('/genai-test', async (req: Request, res: Response) => {
   console.log('🧪 GenAI 테스트 함수 호출 (GET)!');
