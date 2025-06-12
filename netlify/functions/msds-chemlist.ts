@@ -89,7 +89,7 @@ export const handler: Handler = async (event, context) => {
       };
     }
 
-    const url = `${MSDS_BASE_URL}/getMsdsChemList?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
+    const url = `${MSDS_BASE_URL}/chemlist?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
     
     console.log('Fetching MSDS API...');
     console.log('URL (without key):', url.replace(SERVICE_KEY, '[HIDDEN]'));

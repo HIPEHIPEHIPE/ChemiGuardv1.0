@@ -85,7 +85,7 @@ app.get('/msds/chemlist', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'MSDS API key not configured' });
     }
 
-    const url = `${MSDS_BASE_URL}/getMsdsChemList?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
+    const url = `${MSDS_BASE_URL}/chemlist?serviceKey=${SERVICE_KEY}&searchWrd=${encodeURIComponent(searchWrd)}&searchCnd=${searchCnd}&pageNo=${pageNo}&numOfRows=${numOfRows}&type=json`;
     
     console.log('Fetching URL:', url);
     
@@ -121,7 +121,7 @@ app.get('/msds/chemdetail/:detailType', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'MSDS API key not configured' });
     }
 
-    const url = `${MSDS_BASE_URL}/getMsdsChem${detailType}?serviceKey=${SERVICE_KEY}&chemno=${encodeURIComponent(chemno)}&type=json`;
+    const url = `${MSDS_BASE_URL}/chemdetail${detailType}?serviceKey=${SERVICE_KEY}&chemno=${encodeURIComponent(chemno)}&type=json`;
     
     console.log('Fetching MSDS detail URL:', url);
     
