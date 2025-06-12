@@ -11,6 +11,18 @@
   force = true
 
 [[redirects]]
+  from = "/api/gemini/refine-data"
+  to = "/.netlify/functions/gemini-refine-data"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/gemini/generate-qa"
+  to = "/.netlify/functions/gemini-generate-qa"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/test"
   to = "/.netlify/functions/test"
   status = 200
