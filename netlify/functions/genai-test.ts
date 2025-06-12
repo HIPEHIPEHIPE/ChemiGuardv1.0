@@ -32,6 +32,7 @@ const { GoogleGenAI } = require('@google/genai');
 
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
 const LOCATION = process.env.GCP_LOCATION || 'global';
+const GCP_CREDS_BASE64 = process.env.GCP_CREDS_BASE64;
 
 let genAI: any;
 
@@ -41,19 +42,34 @@ async function initializeGenAI() {
   console.log('=== Google GenAI 초기화 시작 ===');
   console.log(`PROJECT_ID: ${PROJECT_ID}`);
   console.log(`LOCATION: ${LOCATION}`);
+  console.log(`CREDENTIALS_PATH: undefined`);
+  console.log(`GCP_CREDS_BASE64 exists: ${!!GCP_CREDS_BASE64}`);
 
-  if (PROJECT_ID) {
+  if (PROJECT_ID && GCP_CREDS_BASE64) {
     try {
+      // Base64 디코딩하여 서비스 계정 키 파싱
+      const credentialsJson = Buffer.from(GCP_CREDS_BASE64, 'base64').toString('utf-8');
+      const credentials = JSON.parse(credentialsJson);
+      
+      console.log('🔑 서비스 계정 키 디코딩 완료');
+      console.log(`Client Email: ${credentials.client_email}`);
+      
       genAI = new GoogleGenAI({
         vertexai: true,
         project: PROJECT_ID,
-        location: LOCATION
+        location: LOCATION,
+        credentials: credentials
       });
       
       console.log('✅ Google GenAI 초기화 완료');
     } catch (error) {
       console.error('❌ Google GenAI 초기화 실패:', error);
     }
+  } else {
+    console.error('❌ 필수 환경 변수 누락:', {
+      PROJECT_ID: !!PROJECT_ID,
+      GCP_CREDS_BASE64: !!GCP_CREDS_BASE64
+    });
   }
 }
 
