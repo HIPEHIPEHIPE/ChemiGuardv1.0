@@ -6,54 +6,13 @@
 [functions]
   node_bundler = "esbuild"
 
-# 간단한 테스트 함수들 (맨 위에 추가)
-[[redirects]]
-  from = "/api/hello"
-  to = "/.netlify/functions/simple-hello"
-  status = 200
-
-[[redirects]]
-  from = "/api/hello-js"
-  to = "/.netlify/functions/hello-js"
-  status = 200
-
-# AI 관련 함수들의 리다이렉트 설정 (우선순위 높게)
+# GenAI 테스트 함수 (msds-chemlist와 동일한 패턴)
 [[redirects]]
   from = "/api/genai-test"
   to = "/.netlify/functions/genai-test"
   status = 200
 
-[[redirects]]
-  from = "/api/debug-ai"
-  to = "/.netlify/functions/debug-ai"
-  status = 200
-
-[[redirects]]
-  from = "/api/gemini/generate-qa"
-  to = "/.netlify/functions/gemini-generate-qa"
-  status = 200
-
-[[redirects]]
-  from = "/api/gemini/generate-question"
-  to = "/.netlify/functions/gemini-generate-qa"
-  status = 200
-
-[[redirects]]
-  from = "/api/gemini/generate-answer"
-  to = "/.netlify/functions/gemini-generate-qa"
-  status = 200
-
-[[redirects]]
-  from = "/api/gemini/refine-data"
-  to = "/.netlify/functions/gemini-refine-data"
-  status = 200
-
-[[redirects]]
-  from = "/api/gemini/status"
-  to = "/.netlify/functions/genai-test"
-  status = 200
-
-# MSDS API 함수들
+# MSDS API 함수들 (작동 확인됨)
 [[redirects]]
   from = "/api/msds/chemlist"
   to = "/.netlify/functions/msds-chemlist"
@@ -64,7 +23,7 @@
   to = "/.netlify/functions/msds/:splat"
   status = 200
 
-# 기존 Express API (우선순위 낮게)
+# 기존 Express API
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"

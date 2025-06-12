@@ -1,16 +1,32 @@
-// MSDS 패턴을 따른 간단한 GenAI 함수
+// MSDS 패턴을 정확히 따른 GenAI 테스트 함수
 interface NetlifyEvent {
   httpMethod: string;
+  path: string;
+  queryStringParameters?: { [key: string]: string } | null;
+  headers: { [key: string]: string };
   body?: string | null;
+  isBase64Encoded: boolean;
+}
+
+interface NetlifyContext {
+  callbackWaitsForEmptyEventLoop: boolean;
+  functionName: string;
+  functionVersion: string;
+  invokedFunctionArn: string;
+  memoryLimitInMB: string;
+  awsRequestId: string;
+  logGroupName: string;
+  logStreamName: string;
 }
 
 interface NetlifyResponse {
   statusCode: number;
   headers?: { [key: string]: string };
   body: string;
+  isBase64Encoded?: boolean;
 }
 
-type Handler = (event: NetlifyEvent) => Promise<NetlifyResponse>;
+type Handler = (event: NetlifyEvent, context: NetlifyContext) => Promise<NetlifyResponse>;
 
 const { GoogleGenAI } = require('@google/genai');
 
@@ -41,16 +57,21 @@ async function initializeGenAI() {
   }
 }
 
-export const handler: Handler = async (event) => {
-  console.log('🧪 GenAI 테스트 함수 호출!');
+export const handler: Handler = async (event, context) => {
+  console.log('GenAI test function called!');
+  console.log('Event:', JSON.stringify(event, null, 2));
+  console.log('PROJECT_ID exists:', !!PROJECT_ID);
   
+  // CORS 헤더 (msds-chemlist와 동일)
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
   };
 
+  // OPTIONS 요청 처리 (msds-chemlist와 동일)
   if (event.httpMethod === 'OPTIONS') {
+    console.log('OPTIONS request received');
     return {
       statusCode: 200,
       headers,
@@ -63,6 +84,7 @@ export const handler: Handler = async (event) => {
 
     // GET 요청 - 상태 확인
     if (event.httpMethod === 'GET') {
+      console.log('GET request - status check');
       return {
         statusCode: 200,
         headers: {
@@ -73,6 +95,8 @@ export const handler: Handler = async (event) => {
           success: true,
           message: 'GenAI 테스트 함수가 작동합니다!',
           genAI: !!genAI,
+          projectId: PROJECT_ID,
+          location: LOCATION,
           timestamp: new Date().toISOString()
         })
       };
@@ -80,10 +104,16 @@ export const handler: Handler = async (event) => {
 
     // POST 요청 - 실제 AI 테스트
     if (event.httpMethod === 'POST') {
+      console.log('POST request - AI test');
+      
       if (!genAI) {
+        console.log('GenAI not initialized');
         return {
           statusCode: 500,
-          headers,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
             error: 'Google GenAI가 초기화되지 않았습니다.'
           })
@@ -107,31 +137,50 @@ export const handler: Handler = async (event) => {
       };
 
       console.log('🚀 GenAI 테스트 요청 전송 중...');
-      const streamingResp = await genAI.models.generateContentStream(apiRequest);
       
-      let responseText = '';
-      for await (const chunk of streamingResp) {
-        if (chunk.text) {
-          responseText += chunk.text;
+      try {
+        const streamingResp = await genAI.models.generateContentStream(apiRequest);
+        
+        let responseText = '';
+        for await (const chunk of streamingResp) {
+          if (chunk.text) {
+            responseText += chunk.text;
+          }
         }
+        
+        console.log('✅ GenAI 테스트 완료');
+        
+        return {
+          statusCode: 200,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: true,
+            result: responseText,
+            message: 'GenAI 테스트 성공!',
+            source: 'google-genai'
+          })
+        };
+        
+      } catch (apiError) {
+        console.error('💥 GenAI API 호출 오류:', apiError);
+        return {
+          statusCode: 500,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            error: 'GenAI API 호출 실패',
+            details: (apiError as Error).message
+          })
+        };
       }
-      
-      console.log('✅ GenAI 테스트 완료');
-      
-      return {
-        statusCode: 200,
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          success: true,
-          result: responseText,
-          message: 'GenAI 테스트 성공!'
-        })
-      };
     }
 
+    console.log('Method not allowed:', event.httpMethod);
     return {
       statusCode: 405,
       headers,
@@ -139,13 +188,16 @@ export const handler: Handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('💥 GenAI 테스트 오류:', error);
+    console.error('GenAI test error:', error);
     return {
       statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'GenAI 테스트 실패',
-        details: (error as Error).message
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        error: 'GenAI test error', 
+        details: (error as Error).message 
       })
     };
   }
