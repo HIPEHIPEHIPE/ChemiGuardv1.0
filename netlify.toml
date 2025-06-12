@@ -3,45 +3,13 @@
   publish = "build"
   command = "npm run build"
 
-# 개별 함수들에 대한 리다이렉트
-[[redirects]]
-  from = "/api/msds/chemlist"
-  to = "/.netlify/functions/msds-chemlist"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/gemini/refine-data"
-  to = "/.netlify/functions/gemini-refine-data"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/gemini/generate-qa"
-  to = "/.netlify/functions/gemini-generate-qa"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/test"
-  to = "/.netlify/functions/test"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/env-check"
-  to = "/.netlify/functions/env-check"
-  status = 200
-  force = true
-
-# 기존 Express API에 대한 리다이렉트
+# 기존 Express API (통합 서버)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
-  force = true
 
-# SPA를 위한 리다이렉트 (catch-all)
+# SPA를 위한 리다이렉트
 [[redirects]]
   from = "/*"
   to = "/index.html"
