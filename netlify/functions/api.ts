@@ -448,7 +448,6 @@ app.post('/gemini/generate-qa', async (req: Request, res: Response) => {
     const audienceLevel = {
       general: '일반인',
       professional: '전문가',
-      expert: '연구자'
     }[difficultyLevel] || '일반인';
 
     switch (qaType) {

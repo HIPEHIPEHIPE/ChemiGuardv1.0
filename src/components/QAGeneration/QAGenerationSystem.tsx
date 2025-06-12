@@ -246,7 +246,7 @@ const QAGenerationSystem: React.FC<QAGenerationSystemProps> = ({ selectedChemica
       const response = await generateQA({
         chemical: selectedChemical,
         questionType: qaType as 'safety' | 'usage' | 'component' | 'regulation',
-        difficultyLevel: difficultyLevel as 'general' | 'professional' | 'expert',
+        difficultyLevel: difficultyLevel as 'general' | 'professional' ,
         language: 'ko'
       });
       
