@@ -3,10 +3,17 @@
   publish = "build"
   command = "npm run build"
 
-# API 요청을 위한 리다이렉트 (가장 위에 위치시키고 force=true 추가)
+# 개별 함수들에 대한 리다이렉트
+[[redirects]]
+  from = "/api/msds/chemlist"
+  to = "/.netlify/functions/msds/chemlist"
+  status = 200
+  force = true
+
+# 기존 Express API에 대한 리다이렉트
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/*" 
+  to = "/.netlify/functions/api/:splat"
   status = 200
   force = true
 

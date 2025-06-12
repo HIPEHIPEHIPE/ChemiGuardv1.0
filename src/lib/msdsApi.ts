@@ -6,6 +6,12 @@ const PROXY_BASE_URL = process.env.NODE_ENV === 'production'
   ? '/api/msds'  // 프로덕션에서는 같은 도메인
   : 'http://localhost:3002/api/msds';  // 개발환경에서는 프록시 서버
 
+// 개별 함수를 사용하는 경우의 URL 설정
+const USE_INDIVIDUAL_FUNCTIONS = true;
+const INDIVIDUAL_FUNCTIONS_BASE = process.env.NODE_ENV === 'production'
+  ? '/.netlify/functions/msds'
+  : 'http://localhost:8888/.netlify/functions/msds';
+
 // 검색 조건 상수
 export const SEARCH_CONDITIONS = {
   KOREAN_NAME: 0,    // 국문명
@@ -135,7 +141,12 @@ export class MSDSApiService {
         pageNo: pageNo.toString()
       });
 
-      const url = `${PROXY_BASE_URL}/chemlist?${params.toString()}`;
+      let url: string;
+      if (USE_INDIVIDUAL_FUNCTIONS && process.env.NODE_ENV === 'production') {
+        url = `${INDIVIDUAL_FUNCTIONS_BASE}/chemlist?${params.toString()}`;
+      } else {
+        url = `${PROXY_BASE_URL}/chemlist?${params.toString()}`;
+      }
       console.log('프록시 서버를 통한 MSDS API 호출:', url);
       
       const response = await fetch(url, {
