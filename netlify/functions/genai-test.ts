@@ -93,6 +93,9 @@ export const handler: Handler = async (event, context) => {
   console.log('Event:', JSON.stringify(event, null, 2));
   console.log('PROJECT_ID exists:', !!PROJECT_ID);
   
+  // 초기화 호출 추가!
+  await initializeGenAI();
+  
   // CORS 헤더 (msds-chemlist와 동일)
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -111,8 +114,6 @@ export const handler: Handler = async (event, context) => {
   }
 
   try {
-    await initializeGenAI();
-
     // GET 요청 - 상태 확인
     if (event.httpMethod === 'GET') {
       console.log('GET request - status check');
