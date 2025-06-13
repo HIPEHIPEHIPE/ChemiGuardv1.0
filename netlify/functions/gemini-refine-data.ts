@@ -174,7 +174,7 @@ CAS: ${data.casNumber || '정보 없음'}
       : `${prompt}\n\n${JSON.stringify(data, null, 2)}`;
 
     const apiRequest = {
-      model: 'gemini-2.5-pro-preview-06-05',
+      model: 'gemini-1.5-flash',        // Pro → Flash로 변경 (속도 최적화)
       contents: [
         {
           role: 'user',
@@ -182,9 +182,9 @@ CAS: ${data.casNumber || '정보 없음'}
         }
       ],
       config: {
-        maxOutputTokens: 256,     // 최대한 줄임 (1024 → 256)
-        temperature: 0.3,         // 더 빠른 응답을 위해 낮춤
-        topP: 0.8                 // 더 빠른 응답을 위해 낮춤
+        maxOutputTokens: 512,     // Flash에 맞게 조정 (256 → 512)
+        temperature: 0.5,         // Flash에 맞게 조정
+        topP: 0.9                 // Flash에 맞게 조정
       }
     };
 
