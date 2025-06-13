@@ -37,7 +37,7 @@
   from = "/api/gemini/refine-data"
   to = "/.netlify/functions/gemini-refine-data"
   status = 200
-  
+
 # 기존 Express API
 [[redirects]]
   from = "/api/*"

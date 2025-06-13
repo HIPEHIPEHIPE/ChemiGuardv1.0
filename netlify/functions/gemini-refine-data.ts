@@ -166,7 +166,12 @@ export const handler: Handler = async (event, context) => {
 
     console.log('🤖 데이터 정제 요청:', typeof data === 'object' ? data.name || 'Unknown' : 'Text data');
 
-    const fullPrompt = `${prompt}\n\n${JSON.stringify(data, null, 2)}`;
+    // 프롬프트 간소화 - 응답 속도 최적화
+    const fullPrompt = data.name 
+      ? `${prompt}\n\n화학물질: ${data.name}
+CAS: ${data.casNumber || '정보 없음'}
+분자식: ${data.molecularFormula || '정보 없음'}`
+      : `${prompt}\n\n${JSON.stringify(data, null, 2)}`;
 
     const apiRequest = {
       model: 'gemini-2.5-pro-preview-06-05',
@@ -177,9 +182,9 @@ export const handler: Handler = async (event, context) => {
         }
       ],
       config: {
-        maxOutputTokens: 65535,
-        temperature: 1,
-        topP: 1
+        maxOutputTokens: 1024,    // 대폭 줄임 (원래 65535) - 응답 속도 최적화
+        temperature: 0.7,         // 줄임 (원래 1)
+        topP: 0.9                 // 줄임 (원래 1)
       }
     };
 

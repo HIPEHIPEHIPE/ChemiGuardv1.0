@@ -181,7 +181,7 @@ export const handler: Handler = async (event) => {
         }
       ],
       config: {
-        maxOutputTokens: 8192,
+        maxOutputTokens: 1024,    // 대폭 줄임 (원래 8192) - 응답 속도 최적화
         temperature: 0.7,
         topP: 0.9
       }
