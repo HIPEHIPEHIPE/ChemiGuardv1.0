@@ -13,27 +13,22 @@ to = "/.netlify/functions/gemini-refine-data"
 status = 200
 
 [[redirects]]
-  from = "/api/gemini/generate-qa"
+from = "/api/gemini/generate-qa"
 to = "/.netlify/functions/gemini-generate-qa"
 status = 200
 
 [[redirects]]
-  from = "/api/gemini/generate-answer"
+from = "/api/gemini/generate-answer"
 to = "/.netlify/functions/gemini-generate-qa"
 status = 200
 
 [[redirects]]
-  from = "/api/test-pdf"
-to = "/.netlify/functions/test-pdf"
+from = "/api/gemini/extract-msds"
+to = "/.netlify/functions/extract-msds"
 status = 200
 
 [[redirects]]
-  from = "/api/gemini/extract-msds"
-to = "/.netlify/functions/gemini-extract-msds"
-status = 200
-
-[[redirects]]
-  from = "/api/genai-test"
+from = "/api/genai-test"
 to = "/.netlify/functions/genai-test"
 status = 200
 

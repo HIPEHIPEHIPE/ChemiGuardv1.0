@@ -148,7 +148,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Google GenAI가 초기화되지 않은 경우 즉시 실패
+    // Google GenAI가 초기화되지 않은 경우 실패
     if (!genAI) {
       console.log('❌ Google GenAI가 초기화되지 않았습니다.');
       return {

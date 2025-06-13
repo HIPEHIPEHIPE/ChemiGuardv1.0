@@ -204,11 +204,15 @@ const PDFAutoExtraction: React.FC<PDFAutoExtractionProps> = ({ onDataExtracted }
     setExtractionStatus('processing');
 
     try {
+      console.log('PDF 분석 시작:', file.name);
+      
       // PDF를 base64로 변환
       const base64 = await fileToBase64(file);
+      console.log('Base64 변환 완료, 길이:', base64.length);
       
-      // Gemini API 호출 (다이렉트 연결)
-      const response = await fetch('/.netlify/functions/gemini-extract-msds', {
+      // PDF 분석 API 호출 (다이렉트)
+      console.log('API 호출 URL: /.netlify/functions/extract-msds');
+      const response = await fetch('/.netlify/functions/extract-msds', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -219,11 +223,17 @@ const PDFAutoExtraction: React.FC<PDFAutoExtractionProps> = ({ onDataExtracted }
         })
       });
 
+      console.log('API 응답 상태:', response.status);
+      console.log('API 응답 헤더:', response.headers);
+
       if (!response.ok) {
-        throw new Error('PDF 분석 중 오류가 발생했습니다.');
+        const errorText = await response.text();
+        console.error('API 응답 오류:', errorText);
+        throw new Error(`PDF 분석 중 오류가 발생했습니다. (${response.status})`);
       }
 
       const result = await response.json();
+      console.log('API 응답 결과:', result);
       
       if (result.error) {
         throw new Error(result.error);
