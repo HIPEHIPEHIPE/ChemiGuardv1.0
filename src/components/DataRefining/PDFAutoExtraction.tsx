@@ -207,8 +207,8 @@ const PDFAutoExtraction: React.FC<PDFAutoExtractionProps> = ({ onDataExtracted }
       // PDF를 base64로 변환
       const base64 = await fileToBase64(file);
       
-      // Gemini API 호출
-      const response = await fetch('/api/gemini/extract-msds', {
+      // Gemini API 호출 (다이렉트 연결)
+      const response = await fetch('/.netlify/functions/gemini-extract-msds', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

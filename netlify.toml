@@ -23,6 +23,11 @@ to = "/.netlify/functions/gemini-generate-qa"
 status = 200
 
 [[redirects]]
+  from = "/api/test-pdf"
+to = "/.netlify/functions/test-pdf"
+status = 200
+
+[[redirects]]
   from = "/api/gemini/extract-msds"
 to = "/.netlify/functions/gemini-extract-msds"
 status = 200

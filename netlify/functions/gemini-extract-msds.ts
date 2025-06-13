@@ -104,6 +104,9 @@ async function initializeGenAI() {
 
 export const handler: Handler = async (event) => {
   console.log('=== MSDS PDF 분석 함수 호출 ===');
+  console.log('HTTP Method:', event.httpMethod);
+  console.log('Headers:', JSON.stringify(event.headers, null, 2));
+  console.log('Body length:', event.body ? event.body.length : 0);
   
   const headers = {
     'Access-Control-Allow-Origin': '*',
