@@ -1,6 +1,6 @@
 // src/pages/QaGeneration/QaGenerationPage.tsx
 import React, { useState, CSSProperties } from 'react';
-import { QADataList, QAGenerationSystem, QAResultsList } from '../../components/QAGeneration';
+import { QADataList, QAGenerationSystem, QAResultsList } from '../../components/features/QAGeneration';
 import { ChemicalData, GeneratedQA } from '../../types/qaGeneration';
 
 // --- 스타일 정의 ---

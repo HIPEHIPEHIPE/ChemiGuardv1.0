@@ -1,6 +1,6 @@
 // src/components/DataRefining/ValidationExamples.tsx
 import React from 'react';
-import { validateIngredientData, VALIDATION_RULES } from '../../utils/dataValidation';
+import { validateIngredientData, VALIDATION_RULES } from '../../../utils/dataValidation';
 
 const ValidationExamples: React.FC = () => {
   // 예시 데이터

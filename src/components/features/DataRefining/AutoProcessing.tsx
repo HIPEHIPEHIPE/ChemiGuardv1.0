@@ -1,5 +1,5 @@
 import React, { useState, CSSProperties } from 'react';
-import { ProductWithIngredients, RefinementStats } from '../../api/dataRefinement';
+import { ProductWithIngredients, RefinementStats } from '../../../api/dataRefinement';
 import PDFAutoExtraction from './PDFAutoExtraction';
 import APIIntegration from './APIIntegration';
 import { FileText, Database, CheckCircle, AlertTriangle, Settings, Zap } from 'lucide-react';

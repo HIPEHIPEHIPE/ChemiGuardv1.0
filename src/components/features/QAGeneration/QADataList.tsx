@@ -1,6 +1,6 @@
 // src/components/QAGeneration/QADataList.tsx
 import React, { CSSProperties } from 'react';
-import { ChemicalData } from '../../types/qaGeneration';
+import { ChemicalData } from '../../../types/qaGeneration';
 
 // --- 스타일 정의 ---
 const tableContainerStyle: CSSProperties = {

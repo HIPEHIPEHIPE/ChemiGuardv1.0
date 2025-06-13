@@ -21,7 +21,7 @@ const ExternalSearch: React.FC<ExternalSearchProps> = ({ onAddToDb }) => {
 
     try {
       // MSDS API 호출 (프록시 서버 사용)
-      const { msdsApi, SEARCH_CONDITIONS } = await import('../../lib/msdsApi');
+      const { msdsApi, SEARCH_CONDITIONS } = await import('../../../lib/msdsApi');
       
       // 검색어가 CAS 번호 형태이면 CAS No로 검색, 아니면 국문명으로 검색
       const searchCondition = /^\d{1,7}-\d{2}-\d$/.test(searchTerm) 

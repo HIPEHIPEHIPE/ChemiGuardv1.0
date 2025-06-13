@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 // 컴포넌트 imports
-import StyledButton from '../../components/DataAcquisition/StyledButton';
-import ExternalSearch from '../../components/DataAcquisition/ExternalSearch';
-import FileUpload from '../../components/DataAcquisition/FileUpload';
-import UploadHistoryTable, { UploadHistory } from '../../components/DataAcquisition/UploadHistoryTable';
-import ManualInputModal from '../../components/DataAcquisition/ManualInputModal';
-import { SearchResult } from '../../components/DataAcquisition/SearchResults';
+import StyledButton from '../../components/features/DataAcquisition/StyledButton';
+import ExternalSearch from '../../components/features/DataAcquisition/ExternalSearch';
+import FileUpload from '../../components/features/DataAcquisition/FileUpload';
+import UploadHistoryTable, { UploadHistory } from '../../components/features/DataAcquisition/UploadHistoryTable';
+import ManualInputModal from '../../components/features/DataAcquisition/ManualInputModal';
+import { SearchResult } from '../../components/features/DataAcquisition/SearchResults';
 
 const DataAcquisitionPage: React.FC = () => {
   // 상태 관리

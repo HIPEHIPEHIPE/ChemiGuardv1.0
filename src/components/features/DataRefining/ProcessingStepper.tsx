@@ -11,7 +11,7 @@ import {
   Lock,
   Trophy
 } from 'lucide-react';
-import { ProcessingStep, ProcessingStepInfo } from '../../types/processing';
+import { ProcessingStep, ProcessingStepInfo } from '../../../types/processing';
 
 interface ProcessingStepperProps {
   currentStep: ProcessingStep;

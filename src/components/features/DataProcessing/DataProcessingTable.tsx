@@ -1,6 +1,6 @@
 // src/components/DataProcessing/DataProcessingTable.tsx
 import React, { CSSProperties } from 'react';
-import { ChemicalData } from '../../types/dataProcessing';
+import { ChemicalData } from '../../../types/dataProcessing';
 
 // --- 인터페이스 정의 ---
 interface DataProcessingTableProps {

@@ -12,9 +12,9 @@ import { uploadTestDataToDB, checkCurrentDataStatus, testDatabaseConnection } fr
 import { ProcessingStep } from '../../types/processingTypes';
 
 // 컴포넌트 imports
-import ProcessingStepper from '../../components/DataRefining/ProcessingStepper';
-import RefinementOverview from '../../components/DataRefining/RefinementOverview';
-import ExcelStyleDataGrid from '../../components/DataRefining/ExcelStyleDataGrid';
+import ProcessingStepper from '../../components/features/DataRefining/ProcessingStepper';
+import RefinementOverview from '../../components/features/DataRefining/RefinementOverview';
+import ExcelStyleDataGrid from '../../components/features/DataRefining/ExcelStyleDataGrid';
 
 // --- 스타일 객체 정의 ---
 

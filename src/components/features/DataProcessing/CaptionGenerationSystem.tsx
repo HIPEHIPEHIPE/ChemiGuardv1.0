@@ -1,7 +1,7 @@
 // src/components/DataProcessing/CaptionGenerationSystem.tsx
 import React, { useState, useEffect, CSSProperties } from 'react';
-import { ChemicalData, GeneratedCaption } from '../../types/dataProcessing';
-import { generateCaption, evaluateCaption } from '../../api/captionGeneration';
+import { ChemicalData, GeneratedCaption } from '../../../types/dataProcessing';
+import { generateCaption, evaluateCaption } from '../../../api/captionGeneration';
 
 // --- 인터페이스 정의 ---
 interface CaptionGenerationSystemProps {

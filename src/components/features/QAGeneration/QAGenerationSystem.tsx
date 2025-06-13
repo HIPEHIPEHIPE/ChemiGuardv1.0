@@ -1,7 +1,7 @@
 // src/components/QAGeneration/QAGenerationSystem.tsx
 import React, { useState, CSSProperties } from 'react';
-import { ChemicalData } from '../../types/qaGeneration';
-import { generateQA, generateQuestion, generateAnswer, saveQA, GeneratedQA } from '../../api/qaGeneration';
+import { ChemicalData } from '../../../types/qaGeneration';
+import { generateQA, generateQuestion, generateAnswer, saveQA, GeneratedQA } from '../../../api/qaGeneration';
 
 // --- 스타일 정의 ---
 const systemContainerStyle: CSSProperties = {

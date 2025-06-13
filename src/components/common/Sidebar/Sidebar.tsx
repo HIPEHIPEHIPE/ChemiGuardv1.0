@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useUserStore } from '../../stores/userStore';
+import { useUserStore } from '../../../stores/userStore';
 
 const Sidebar = () => {
   const userInfo = useUserStore((state) => state.userInfo);

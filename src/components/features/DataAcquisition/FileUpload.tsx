@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader, Edit3, Save, X, FileSpreadsheet } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
 
 interface FileUploadProps {
   onUploadComplete: () => void;

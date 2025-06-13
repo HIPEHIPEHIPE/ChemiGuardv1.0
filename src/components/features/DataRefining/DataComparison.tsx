@@ -1,7 +1,7 @@
 // src/components/DataRefining/DataComparison.tsx - Excel Style Version
 import React from 'react';
 import ExcelStyleDataGrid from './ExcelStyleDataGrid';
-import { ProductWithIngredients } from '../../api/dataRefinement';
+import { ProductWithIngredients } from '../../../api/dataRefinement';
 
 interface DataComparisonProps {
   products?: ProductWithIngredients[];

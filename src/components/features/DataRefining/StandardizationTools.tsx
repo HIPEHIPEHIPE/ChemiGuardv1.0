@@ -13,7 +13,7 @@ import {
   Type,
   Hash
 } from 'lucide-react';
-import { StandardizationRule } from '../../types/processing';
+import { StandardizationRule } from '../../../types/processing';
 
 interface StandardizationToolsProps {
   onApplyStandardization: (rules: StandardizationRule[]) => Promise<void>;

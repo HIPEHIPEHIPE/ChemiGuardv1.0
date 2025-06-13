@@ -1,6 +1,6 @@
 // src/components/QAGeneration/QAResultsList.tsx
 import React, { useState, CSSProperties } from 'react';
-import { GeneratedQA } from '../../types/qaGeneration';
+import { GeneratedQA } from '../../../types/qaGeneration';
 
 // --- 스타일 정의 ---
 const resultsContainerStyle: CSSProperties = {

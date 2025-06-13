@@ -1,6 +1,6 @@
 // src/pages/DataProcessing/DataProcessingPage.tsx
 import React, { useState, CSSProperties } from 'react';
-import { DataProcessingTable, CaptionGenerationSystem } from '../../components/DataProcessing';
+import { DataProcessingTable, CaptionGenerationSystem } from '../../components/features/DataProcessing';
 import { ChemicalData } from '../../types/dataProcessing';
 
 // --- 스타일 객체 정의 ---

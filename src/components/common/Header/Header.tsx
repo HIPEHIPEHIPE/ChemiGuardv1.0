@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useUserStore } from '../../stores/userStore';
+import { useUserStore } from '../../../stores/userStore';
 
 const Header = () => {
   const location = useLocation();

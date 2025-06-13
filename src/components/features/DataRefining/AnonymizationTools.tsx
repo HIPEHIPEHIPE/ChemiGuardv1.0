@@ -13,7 +13,7 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react';
-import { AnonymizationRule } from '../../types/processing';
+import { AnonymizationRule } from '../../../types/processing';
 
 interface AnonymizationToolsProps {
   onApplyAnonymization: (rules: AnonymizationRule[]) => Promise<void>;

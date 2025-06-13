@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react';
-import { ProductWithIngredients } from '../../api/dataRefinement';
+import { ProductWithIngredients } from '../../../api/dataRefinement';
 
 interface RefinementTableProps {
   products: ProductWithIngredients[];

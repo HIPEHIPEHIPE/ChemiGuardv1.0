@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react';
-import { RefinementStats } from '../../api/dataRefinement';
+import { RefinementStats } from '../../../api/dataRefinement';
 
 interface FinalizedDataProps {
   stats: RefinementStats | null;

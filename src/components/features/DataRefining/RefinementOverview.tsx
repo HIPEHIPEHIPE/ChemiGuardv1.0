@@ -2,7 +2,7 @@ import React, { CSSProperties, useState } from 'react';
 import RefineStatCard from './RefineStatCard';
 import IssueCard from './IssueCard';
 import RefinementTable from './RefinementTable';
-import { ProductWithIngredients, RefinementStats, RefinementIssue, determineProductStatus } from '../../api/dataRefinement';
+import { ProductWithIngredients, RefinementStats, RefinementIssue, determineProductStatus } from '../../../api/dataRefinement';
 import { detailTextStyle, detailHighlightStyle, btnStyle, getIssueIcon } from './utils';
 
 interface RefinementOverviewProps {

@@ -20,9 +20,9 @@ import {
   getProductsForRefinement,
   updateIngredient,
   applyAutoRefinement 
-} from '../../api/dataRefinement';
-import { debugDatabaseState, cleanupDatabase, cleanupEmptyProducts } from '../../utils/debugDatabase';
-import { ProcessingStep } from '../../types/processingTypes';
+} from '../../../api/dataRefinement';
+import { debugDatabaseState, cleanupDatabase, cleanupEmptyProducts } from '../../../utils/debugDatabase';
+import { ProcessingStep } from '../../../types/processingTypes';
 
 // 스타일 정의
 const gridContainerStyle: CSSProperties = {
