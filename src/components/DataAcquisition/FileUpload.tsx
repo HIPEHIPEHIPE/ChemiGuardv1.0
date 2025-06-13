@@ -500,7 +500,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
     try {
       const base64 = await fileToBase64(pdfFile);
       
-      const response = await fetch('/api/gemini/extract-msds', {
+      const response = await fetch('/.netlify/functions/extract-msds', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
