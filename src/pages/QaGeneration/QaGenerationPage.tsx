@@ -299,6 +299,7 @@ const QaGenerationPage: React.FC = () => {
       {/* 생성된 QA 결과 목록 */}
       <QAResultsList
         qaList={mockGeneratedQAs}
+        selectedChemical={selectedChemical}
         onEdit={handleEditQA}
         onDelete={handleDeleteQA}
         onBulkAction={handleBulkAction}

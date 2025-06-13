@@ -1,6 +1,6 @@
 // src/components/QAGeneration/QAResultsList.tsx
-import React, { useState, CSSProperties } from 'react';
-import { GeneratedQA } from '../../../types/qaGeneration';
+import React, { useState, useEffect, CSSProperties } from 'react';
+import { GeneratedQA, ChemicalData } from '../../../types/qaGeneration';
 
 // --- 스타일 정의 ---
 const resultsContainerStyle: CSSProperties = {
@@ -152,6 +152,7 @@ const paginationActiveStyle: CSSProperties = {
 // --- 컴포넌트 정의 ---
 interface QAResultsListProps {
   qaList: GeneratedQA[];
+  selectedChemical: ChemicalData | null;
   onEdit: (qa: GeneratedQA) => void;
   onDelete: (id: string) => void;
   onBulkAction: (action: string, ids: string[]) => void;
@@ -159,6 +160,7 @@ interface QAResultsListProps {
 
 const QAResultsList: React.FC<QAResultsListProps> = ({
   qaList,
+  selectedChemical,
   onEdit,
   onDelete,
   onBulkAction,
@@ -167,6 +169,13 @@ const QAResultsList: React.FC<QAResultsListProps> = ({
   const [filterType, setFilterType] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
+
+  // selectedChemical이 변경될 때 currentPage를 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedItems([]);
+    setFilterType('all');
+  }, [selectedChemical]);
 
   const getTypeText = (type: string) => {
     switch (type) {
@@ -187,10 +196,12 @@ const QAResultsList: React.FC<QAResultsListProps> = ({
     }
   };
 
-  // 필터링된 데이터
-  const filteredQAs = qaList.filter(qa => 
-    filterType === 'all' || qa.type === filterType
-  );
+  // 필터링된 데이터 (선택된 물질 기준)
+  const filteredQAs = qaList.filter(qa => {
+    const matchesChemical = selectedChemical ? qa.chemicalId === selectedChemical.id : false;
+    const matchesType = filterType === 'all' || qa.type === filterType;
+    return matchesChemical && matchesType;
+  });
 
   // 페이지네이션
   const totalPages = Math.ceil(filteredQAs.length / itemsPerPage);
@@ -223,37 +234,54 @@ const QAResultsList: React.FC<QAResultsListProps> = ({
   return (
     <div style={resultsContainerStyle}>
       <div style={headerStyle}>
-        <h3 style={titleStyle}>생성된 Q&A 목록 ({filteredQAs.length}건)</h3>
+        <h3 style={titleStyle}>생성된 Q&A 목록</h3>
         <div style={controlsStyle}>
-          <select 
-            style={selectStyle}
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="all">전체 유형</option>
-            <option value="safety">안전성 문의</option>
-            <option value="usage">사용법 문의</option>
-            <option value="component">성분 정보</option>
-            <option value="regulation">규제 정보</option>
-          </select>
-          
-          <button 
-            style={btnStyle('danger')}
-            onClick={handleBulkDelete}
-            disabled={selectedItems.length === 0}
-          >
-            선택 삭제 ({selectedItems.length})
-          </button>
-          
-          <button style={btnStyle('secondary')}>
-            일괄 편집
-          </button>
-          
-          <button style={btnStyle('primary')}>
-            엑셀 내보내기
-          </button>
+          {selectedChemical && (
+            <>
+              <select 
+                style={selectStyle}
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="all">전체 유형</option>
+                <option value="safety">안전성 문의</option>
+                <option value="usage">사용법 문의</option>
+                <option value="component">성분 정보</option>
+                <option value="regulation">규제 정보</option>
+              </select>
+              
+              <button 
+                style={btnStyle('danger')}
+                onClick={handleBulkDelete}
+                disabled={selectedItems.length === 0}
+              >
+                선택 삭제 ({selectedItems.length})
+              </button>
+              
+              <button style={btnStyle('secondary')}>
+                일괄 편집
+              </button>
+              
+              <button style={btnStyle('primary')}>
+                엑셀 내보내기
+              </button>
+            </>
+          )}
         </div>
       </div>
+      
+      {selectedChemical && (
+        <div style={{ marginBottom: '15px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontWeight: 600, color: '#1e40af' }}>선택된 물질:</span>
+            <span style={{ color: '#1f2937' }}>{selectedChemical.name}</span>
+            <span style={{ color: '#6b7280', fontSize: '14px' }}>({selectedChemical.casNumber})</span>
+            <span style={{ marginLeft: 'auto', color: '#1e40af', fontWeight: 500 }}>
+              총 {filteredQAs.length}개 Q&A
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 전체 선택 체크박스 */}
       {paginatedQAs.length > 0 && (
@@ -273,10 +301,15 @@ const QAResultsList: React.FC<QAResultsListProps> = ({
       )}
 
       {/* Q&A 아이템 목록 */}
-      {paginatedQAs.length === 0 ? (
+      {!selectedChemical ? (
         <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-          <h4>생성된 Q&A가 없습니다</h4>
-          <p>화학물질을 선택하고 Q&A를 생성해보세요.</p>
+          <h4>물질을 선택해주세요</h4>
+          <p>위 드롭다운에서 물질을 선택하면 해당 물질의 Q&A 목록을 확인할 수 있습니다.</p>
+        </div>
+      ) : paginatedQAs.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+          <h4>{selectedChemical.name}에 대한 Q&A가 없습니다</h4>
+          <p>이 물질에 대한 Q&A를 생성해보세요.</p>
         </div>
       ) : (
         paginatedQAs.map((qa) => (
@@ -331,7 +364,7 @@ const QAResultsList: React.FC<QAResultsListProps> = ({
       )}
 
       {/* 페이지네이션 */}
-      {totalPages > 1 && (
+      {selectedChemical && totalPages > 1 && (
         <div style={paginationStyle}>
           <button
             style={paginationButtonStyle}
