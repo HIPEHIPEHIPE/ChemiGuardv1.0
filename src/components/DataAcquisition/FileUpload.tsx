@@ -8,50 +8,20 @@ interface FileUploadProps {
   onUploadComplete: () => void;
 }
 
-// PDF 분석으로 추출된 데이터 인터페이스
+// PDF 분석으로 추출된 데이터 인터페이스 (간소화된 버전)
 interface ExtractedData {
   productInfo: {
     productName: string;
     manufacturer: string;
-    emergencyContact: string;
-    recommendedUse: string;
-    restrictions: string;
-  };
-  hazardInfo: {
-    ghs_classification: string;
-    pictograms: string[];
-    signalWord: string;
-    hazardStatements: string[];
-    precautionaryStatements: string[];
-    nfpaRatings: {
-      health: number;
-      fire: number;
-      reactivity: number;
-    };
   };
   composition: Array<{
     substanceName: string;
-    synonym: string;
     casNumber: string;
     percentage: string;
   }>;
-  firstAid: {
-    eyeContact: string;
-    skinContact: string;
-    inhalation: string;
-    ingestion: string;
-    medicalAttention: string;
-  };
-  physicalProperties: {
-    appearance: string;
-    odor: string;
-    ph: string;
-    meltingPoint: string;
-    boilingPoint: string;
-    flashPoint: string;
-    density: string;
-    vaporPressure: string;
-    solubility: string;
+  hazardInfo: {
+    ghs_classification: string;
+    signalWord: string;
   };
 }
 
@@ -592,7 +562,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
         product_name: extractedData.productInfo.productName || 'MSDS 추출 제품',
         manufacturer: extractedData.productInfo.manufacturer || '',
         product_category: 'MSDS 추출',
-        usage_purpose: extractedData.productInfo.recommendedUse || '',
+        usage_purpose: `GHS: ${extractedData.hazardInfo.ghs_classification || ''}, 신호어: ${extractedData.hazardInfo.signalWord || ''}`,
         collected_method: 'pdf_analysis',
         collected_source: 'gemini_pdf_extraction',
         status: 'collected',
@@ -617,7 +587,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
           const chemicalData = {
             chemical_id: `PDF-CHEM-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             chemical_name_ko: component.substanceName,
-            chemical_name_en: component.synonym || '',
+            chemical_name_en: '', // synonym 필드가 없으므로 비움
             cas_no: component.casNumber || '',
             collected_method: 'pdf_analysis',
             collected_source: 'msds_pdf',
@@ -932,6 +902,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
                   <p><strong>제조사:</strong> {extractedData.productInfo.manufacturer || '미확인'}</p>
                   <p><strong>구성성분:</strong> {extractedData.composition.length}개 성분</p>
                   <p><strong>GHS 분류:</strong> {extractedData.hazardInfo.ghs_classification || '미확인'}</p>
+                  <p><strong>신호어:</strong> {extractedData.hazardInfo.signalWord || '미확인'}</p>
                 </div>
               </div>
 
