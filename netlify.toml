@@ -23,6 +23,21 @@
   to = "/.netlify/functions/msds/:splat"
   status = 200
 
+  [[redirects]]
+  from = "/api/gemini/refine-data"
+  to = "/.netlify/functions/gemini-refine-data"
+  status = 200
+
+[[redirects]]
+  from = "/api/gemini/generate-qa"
+  to = "/.netlify/functions/gemini-generate-qa"
+  status = 200
+
+[[redirects]]
+  from = "/api/gemini/generate-answer"
+  to = "/.netlify/functions/gemini-generate-qa"
+  status = 200
+
 # 기존 Express API
 [[redirects]]
   from = "/api/*"
