@@ -130,7 +130,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const { chemical, qaType = 'safety', difficultyLevel = 'general' } = JSON.parse(event.body || '{}');
+    const { chemical, qaType = 'safety', difficultyLevel = 'general', question } = JSON.parse(event.body || '{}');
     
     if (!chemical) {
       return {
@@ -151,11 +151,36 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    console.log(`🤖 QA 생성 요청: ${chemical.name} (${qaType})`);
+    console.log(`🤖 QA 생성 요청: ${chemical.name} (${qaType})${question ? ' - 사용자 질문: ' + question.substring(0, 30) + '...' : ''}`);
 
     const audienceLevel = difficultyLevel === 'general' ? '일반인' : '전문가';
     
-    const specificPrompt = `화학물질 ${chemical.name}에 대한 안전성 관련 Q&A를 단 하나만 생성해주세요.
+    let specificPrompt;
+    
+    if (question) {
+      // 사용자가 질문을 입력한 경우 - 해당 질문에 대한 답변 생성
+      specificPrompt = `화학물질 ${chemical.name}에 대한 다음 질문에 대해 정확하고 상세한 답변을 작성해주세요.
+
+사용자 질문: "${question}"
+
+화학물질 정보:
+- 물질명: ${chemical.name}
+- CAS 번호: ${chemical.casNumber || '정보 없음'}
+
+답변 지침:
+- 대상: ${audienceLevel}
+- 사용자의 질문에 직접적으로 답변
+- 과학적이고 정확한 정보 제공
+- 500자 이내로 작성
+
+반드시 다음 JSON 형식으로만 응답해주세요:
+{
+  "question": "${question}",
+  "answer": "사용자 질문에 대한 상세하고 정확한 답변"
+}`;
+    } else {
+      // 일반적인 Q&A 생성
+      specificPrompt = `화학물질 ${chemical.name}에 대한 안전성 관련 Q&A를 단 하나만 생성해주세요.
 
 화학물질 정보:
 - 물질명: ${chemical.name}
@@ -173,6 +198,7 @@ export const handler: Handler = async (event) => {
   "question": "구체적이고 실용적인 안전성 질문",
   "answer": "상세하고 유용한 안전 정보 및 주의사항"
 }`;
+    }
 
     const apiRequest = {
       model: 'gemini-2.0-flash-lite-001',  // GCP에서 확인된 정확한 모델명
