@@ -1,51 +1,51 @@
 [build]
-  functions = "netlify/functions"
-  publish = "build"
-  command = "npm run build"
+functions = "netlify/functions"
+publish = "build"
+command = "npm run build"
 
 [functions]
-  node_bundler = "esbuild"
+node_bundler = "esbuild"
 
-# GenAI 테스트 함수 (msds-chemlist와 동일한 패턴)
+# GenAI 함수들 - 가장 구체적인 것부터 (순서 중요!)
 [[redirects]]
-  from = "/api/genai-test"
-  to = "/.netlify/functions/genai-test"
-  status = 200
-
-# MSDS API 함수들 (작동 확인됨)
-[[redirects]]
-  from = "/api/msds/chemlist"
-  to = "/.netlify/functions/msds-chemlist"
-  status = 200
-
-[[redirects]]
-  from = "/api/msds/chemdetail/*"
-  to = "/.netlify/functions/msds/:splat"
-  status = 200
+from = "/api/gemini/refine-data"
+to = "/.netlify/functions/gemini-refine-data"
+status = 200
 
 [[redirects]]
   from = "/api/gemini/generate-qa"
-  to = "/.netlify/functions/gemini-generate-qa"
-  status = 200
+to = "/.netlify/functions/gemini-generate-qa"
+status = 200
 
 [[redirects]]
   from = "/api/gemini/generate-answer"
-  to = "/.netlify/functions/gemini-generate-qa"
-  status = 200
+to = "/.netlify/functions/gemini-generate-qa"
+status = 200
 
 [[redirects]]
-  from = "/api/gemini/refine-data"
-  to = "/.netlify/functions/gemini-refine-data"
-  status = 200
+  from = "/api/genai-test"
+to = "/.netlify/functions/genai-test"
+status = 200
 
-# 기존 Express API
+# MSDS API 함수들 (작동 확인됨)
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
+from = "/api/msds/chemlist"
+to = "/.netlify/functions/msds-chemlist"
+status = 200
+
+[[redirects]]
+from = "/api/msds/chemdetail/*"
+to = "/.netlify/functions/msds/:splat"
+status = 200
+
+# 기존 Express API (맨 아래)
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/api/:splat"
+status = 200
 
 # SPA를 위한 리다이렉트 (맨 마지막에 배치)
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+from = "/*"
+to = "/index.html"
+status = 200

@@ -155,7 +155,7 @@ export const handler: Handler = async (event) => {
 
     const audienceLevel = difficultyLevel === 'general' ? '일반인' : '전문가';
     
-    const specificPrompt = `화학물질 ${chemical.name}에 대한 안전성 관련 Q&A를 생성해주세요.
+    const specificPrompt = `화학물질 ${chemical.name}에 대한 안전성 관련 Q&A를 단 하나만 생성해주세요.
 
 화학물질 정보:
 - 물질명: ${chemical.name}
@@ -163,10 +163,12 @@ export const handler: Handler = async (event) => {
 
 작성 지침:
 - 대상: ${audienceLevel}
+- 단 하나의 질문과 다남
 - 질문은 실제 사용자가 안전성에 대해 궁금해할 만한 내용
 - 답변은 정확하고 실용적인 안전 정보 제공
+- 500자 이내로 작성
 
-다음 JSON 형식으로 응답해주세요:
+반드시 다음 JSON 형식으로만 응답해주세요:
 {
   "question": "구체적이고 실용적인 안전성 질문",
   "answer": "상세하고 유용한 안전 정보 및 주의사항"
@@ -207,15 +209,31 @@ export const handler: Handler = async (event) => {
     
     console.log('✅ QA 생성 완료');
     
-    // JSON 파싱 시도
+    // JSON 파싱 시도 (더 안전하게)
     let parsedResponse;
     try {
-      parsedResponse = JSON.parse(responseText.trim());
+      // JSON 마커 제거 및 정리
+      let cleanedResponse = responseText.trim();
+      
+      // JSON 코드 블록 제거
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/```json\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // 배열인 경우 첫 번째 요소만 가져오기
+      const parsed = JSON.parse(cleanedResponse);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        parsedResponse = parsed[0]; // 첫 번째 Q&A만 사용
+      } else {
+        parsedResponse = parsed;
+      }
+      
+      console.log('✅ JSON 파싱 성공');
     } catch (parseError) {
       console.log('⚠️ JSON 파싱 실패, 텍스트로 처리');
       parsedResponse = {
         question: `${chemical.name}에 대한 ${qaType} 관련 질문`,
-        answer: responseText.trim()
+        answer: responseText.trim().substring(0, 500) // 500자로 제한
       };
     }
     
