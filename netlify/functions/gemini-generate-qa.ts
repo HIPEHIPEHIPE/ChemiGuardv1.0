@@ -173,7 +173,7 @@ export const handler: Handler = async (event) => {
 }`;
 
     const apiRequest = {
-      model: 'gemini-2.5-pro-preview-06-05',  // 일단 작동하는 모델로 복귀
+      model: 'gemini-2.0-flash-lite-001',  // GCP에서 확인된 정확한 모델명
       contents: [
         {
           role: 'user',
@@ -181,7 +181,7 @@ export const handler: Handler = async (event) => {
         }
       ],
       config: {
-        maxOutputTokens: 256,     // 짧게 유지
+        maxOutputTokens: 512,     // Flash Lite에 적합한 길이
         temperature: 0.5,
         topP: 0.9
       }
