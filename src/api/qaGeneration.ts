@@ -56,7 +56,7 @@ export const generateQA = async (request: QAGenerationRequest): Promise<QAGenera
       difficultyLevel
     });
 
-    const response = await fetch('/api/gemini/generate-qa', {
+    const response = await fetch('/.netlify/functions/gemini-generate-qa', {  // 직접 함수 호출로 우회
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ export const generateAnswer = async (
       difficultyLevel
     });
 
-    const response = await fetch('/api/gemini/generate-answer', {
+    const response = await fetch('/.netlify/functions/gemini-generate-qa', {  // generate-answer도 동일 함수 사용
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

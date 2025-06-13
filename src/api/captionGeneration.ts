@@ -25,7 +25,7 @@ export const generateCaption = async (request: CaptionGenerationRequest): Promis
     // AI 프롬프트 생성
     const prompt = createPrompt(chemical, generationType, language, customPrompt);
     
-    const response = await fetch('/api/gemini/refine-data', {
+    const response = await fetch('/.netlify/functions/gemini-refine-data', {  // 직접 함수 호출로 우회
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -231,7 +231,7 @@ ${generatedCaption}
   `;
 
   try {
-    const response = await fetch('/api/gemini/refine-data', {
+    const response = await fetch('/.netlify/functions/gemini-refine-data', {  // 직접 함수 호출로 우회
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
