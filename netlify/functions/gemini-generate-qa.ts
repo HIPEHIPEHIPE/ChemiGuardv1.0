@@ -181,14 +181,22 @@ export const handler: Handler = async (event) => {
         }
       ],
       config: {
-        maxOutputTokens: 1024,    // 대폭 줄임 (원래 8192) - 응답 속도 최적화
-        temperature: 0.7,
-        topP: 0.9
+        maxOutputTokens: 256,     // 최대한 줄임 (1024 → 256)
+        temperature: 0.3,         // 더 빠른 응답을 위해 낮춤
+        topP: 0.8                 // 더 빠른 응답을 위해 낮춤
       }
     };
 
     console.log('🚀 Google GenAI QA 생성 요청 전송 중...');
-    const streamingResp = await genAI.models.generateContentStream(apiRequest);
+    
+    // 타임아웃 대비책 - 8초 내에 응답 없으면 부분 결과라도 반환
+    const timeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('QA 생성 시간 초과 (8초)')), 8000)
+    );
+    
+    const aiRequest = genAI.models.generateContentStream(apiRequest);
+    
+    const streamingResp = await Promise.race([aiRequest, timeout]);
     
     let responseText = '';
     for await (const chunk of streamingResp) {
