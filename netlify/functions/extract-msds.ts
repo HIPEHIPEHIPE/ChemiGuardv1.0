@@ -256,6 +256,7 @@ export const handler: Handler = async (event) => {
     }
     
     console.log('스트리밍 완료 - 응답 텍스트 길이:', responseText.length);
+    console.log('실제 응답 내용:', responseText.substring(0, 200));
     
     // JSON 파싱 시도
     let extractedData;
@@ -270,18 +271,40 @@ export const handler: Handler = async (event) => {
       console.log('✅ JSON 파싱 성공');
     } catch (parseError) {
       console.error('JSON 파싱 실패:', parseError);
-      // 기본 구조 반환 (간소화된 버전)
-      extractedData = {
-        productInfo: {
-          productName: fileName.replace('.pdf', ''),
-          manufacturer: ''
-        },
-        composition: [],
-        hazardInfo: {
-          ghs_classification: '',
-          signalWord: ''
-        }
-      };
+      console.log('파싱 실패한 원본 응답:', responseText);
+      
+      // AI가 일반 텍스트로 응답한 경우 처리
+      if (responseText.includes('죄송') || responseText.includes('분석') || responseText.includes('오류')) {
+        console.log('AI가 오류 메시지를 반환했습니다.');
+        extractedData = {
+          productInfo: {
+            productName: fileName.replace('.pdf', ''),
+            manufacturer: 'PDF 분석 오류'
+          },
+          composition: [{
+            substanceName: 'PDF 분석 실패',
+            casNumber: '',
+            percentage: ''
+          }],
+          hazardInfo: {
+            ghs_classification: 'PDF 분석 실패',
+            signalWord: '주의'
+          }
+        };
+      } else {
+        // 기본 구조 반환 (간소화된 버전)
+        extractedData = {
+          productInfo: {
+            productName: fileName.replace('.pdf', ''),
+            manufacturer: ''
+          },
+          composition: [],
+          hazardInfo: {
+            ghs_classification: '',
+            signalWord: ''
+          }
+        };
+      }
     }
     
     return {
